@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a1a2e" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f5f5f0" media="(prefers-color-scheme: light)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Morning Brief" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Morning Brief</title>
+  <style>
+    /* ─── Tokens ─────────────────────────────────────────── */
+    :root {
+      --bg: #f5f5f0;
+      --bg2: #eeeee8;
+      --surface: #ffffff;
+      --border: #d8d8d0;
+      --text: #1a1a1a;
+      --text2: #555550;
+      --accent: #5b6af0;
+      --accent-light: #eef0ff;
+      --tag-bg: #e8e8f8;
+      --tag-text: #3a3a8a;
+      --radius: 14px;
+      --nav-h: 64px;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111118;
+        --bg2: #1a1a24;
+        --surface: #1e1e2a;
+        --border: #2e2e40;
+        --text: #e8e8f0;
+        --text2: #8888a0;
+        --accent: #7b8eff;
+        --accent-light: #1e2040;
+        --tag-bg: #252540;
+        --tag-text: #9ba8ff;
+      }
+    }
+
+    /* ─── Reset ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.55;
+      overflow: hidden;
+    }
+
+    /* ─── Layout ─────────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+    .screen {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px calc(var(--nav-h) + var(--safe-b) + 16px);
+    }
+    .screen.active { display: block; }
+
+    /* ─── Nav ────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: calc(var(--nav-h) + var(--safe-b));
+      padding-bottom: var(--safe-b);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      z-index: 100;
+    }
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text2);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: color .15s;
+      padding: 8px 4px;
+    }
+    .nav-btn svg { width: 22px; height: 22px; stroke-width: 1.8; }
+    .nav-btn.active { color: var(--accent); }
+
+    /* ─── Header ─────────────────────────────────────────── */
+    .screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
+    .subtitle { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+    /* ─── Buttons ────────────────────────────────────────── */
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn-primary:active { transform: scale(.98); opacity: .9; }
+    .btn-primary:disabled { opacity: .5; cursor: default; transform: none; }
+
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--text2);
+      cursor: pointer;
+    }
+
+    /* ─── Setup screen ───────────────────────────────────── */
+    #screen-setup {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: 40px 24px;
+    }
+    .setup-logo { font-size: 48px; margin-bottom: 16px; }
+    .setup-title { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
+    .setup-desc { color: var(--text2); font-size: 15px; margin-bottom: 32px; line-height: 1.6; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text2); letter-spacing: 0.02em; text-transform: uppercase; }
+    input[type="password"], input[type="text"], textarea, select {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 80px; }
+    .setup-note {
+      font-size: 12px;
+      color: var(--text2);
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: var(--bg2);
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+    .setup-note a { color: var(--accent); }
+
+    /* ─── Brief screen ───────────────────────────────────── */
+    .brief-hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .brief-date {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 4px;
+    }
+    .brief-hero h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+
+    .articles-list { display: flex; flex-direction: column; gap: 14px; }
+
+    .article-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      animation: fadeUp .4s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .article-card:nth-child(1) { animation-delay: .05s; }
+    .article-card:nth-child(2) { animation-delay: .1s; }
+    .article-card:nth-child(3) { animation-delay: .15s; }
+    .article-card:nth-child(4) { animation-delay: .2s; }
+    .article-card:nth-child(5) { animation-delay: .25s; }
+
+    .article-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .article-tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .article-time {
+      font-size: 12px;
+      color: var(--text2);
+      margin-left: auto;
+    }
+    .article-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .article-body {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .article-insight {
+      display: flex;
+      gap: 10px;
+      background: var(--accent-light);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .article-insight::before {
+      content: "⚡";
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    /* Loading state */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 48px 0;
+      color: var(--text2);
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-state p { font-size: 14px; }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 48px 0;
+      text-align: center;
+    }
+    .empty-icon { font-size: 48px; }
+    .empty-state h3 { font-size: 18px; font-weight: 600; }
+    .empty-state p { font-size: 14px; color: var(--text2); max-width: 260px; }
+
+    /* ─── Historique ─────────────────────────────────────── */
+    .history-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .history-item:hover { border-color: var(--accent); }
+    .history-item-date { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .history-item-preview { font-size: 13px; color: var(--text2); }
+    .history-detail { display: none; }
+    .history-detail.open { display: block; }
+
+    /* ─── Thèmes ─────────────────────────────────────────── */
+    .themes-category { margin-bottom: 24px; }
+    .themes-category h3 {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text2);
+      margin-bottom: 10px;
+    }
+    .themes-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .theme-tag {
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text2);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .15s;
+      user-select: none;
+    }
+    .theme-tag.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ─── Profil ─────────────────────────────────────────── */
+    .profil-section { margin-bottom: 24px; }
+    .profil-section h3 {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text2);
+      margin-bottom: 12px;
+    }
+    .save-bar {
+      position: sticky;
+      bottom: calc(var(--nav-h) + var(--safe-b) + 12px);
+      padding: 12px 0 0;
+    }
+
+    /* ─── Toast ──────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: calc(var(--nav-h) + var(--safe-b) + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity .25s, transform .25s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 200;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ─── Config key button ──────────────────────────────── */
+    .api-key-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .api-key-row input { flex: 1; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══════════════════════════════════════════════════════
+       SETUP — First run
+  ══════════════════════════════════════════════════════ -->
+  <div id="screen-setup">
+    <div class="setup-logo">☀️</div>
+    <div class="setup-title">Morning Brief</div>
+    <div class="setup-desc">Votre brief personnalisé chaque matin, généré par l'IA en 5 articles sur-mesure.</div>
+
+    <div class="form-group">
+      <label>Clé API Anthropic</label>
+      <input type="password" id="setup-apikey" placeholder="sk-ant-…" autocomplete="off" />
+      <div class="setup-note">
+        Votre clé est stockée uniquement sur cet appareil.<br>
+        Obtenez-la sur <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Votre rôle</label>
+      <input type="text" id="setup-role" placeholder="Ex : Manager IT, 35 collaborateurs" value="Manager IT chez Kiabi, 35 collaborateurs" />
+    </div>
+
+    <div class="form-group">
+      <label>Contexte</label>
+      <textarea id="setup-context" placeholder="Décrivez votre contexte professionnel et personnel…">Périmètre Collections & Offre Produit. Travaille régulièrement avec Hong Kong. Origines polonaises, père en Espagne, sœur à Dubaï.</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Objectif d'apprentissage</label>
+      <input type="text" id="setup-goal" placeholder="Ex : Rester à la pointe de l'IA et du management" value="Développer ma culture générale, rester à la pointe de l'IA et du management interculturel" />
+    </div>
+
+    <button class="btn-primary" onclick="setupSave()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+      Commencer
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       MAIN — Tabs
+  ══════════════════════════════════════════════════════ -->
+  <div id="main-app" style="display:none; display:flex; flex-direction:column; flex:1; overflow:hidden;">
+
+    <!-- Brief -->
+    <div id="screen-brief" class="screen active">
+      <div class="screen-header">
+        <div>
+          <h1>Morning Brief</h1>
+          <div class="subtitle" id="brief-subtitle">Prêt pour votre brief du jour ?</div>
+        </div>
+        <button class="btn-ghost" onclick="showApiKeyDialog()" title="Paramètres clé API">⚙️</button>
+      </div>
+
+      <div class="brief-hero">
+        <div class="brief-date" id="brief-date"></div>
+        <h2 id="brief-greeting">Bonjour !</h2>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <button class="btn-primary" id="btn-generate" onclick="generateBrief()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Générer mon brief
+        </button>
+      </div>
+
+      <div id="articles-container"></div>
+    </div>
+
+    <!-- Thèmes -->
+    <div id="screen-themes" class="screen">
+      <div class="screen-header">
+        <div>
+          <h1>Thèmes</h1>
+          <div class="subtitle">Sélectionnez vos centres d'intérêt</div>
+        </div>
+      </div>
+      <div id="themes-container"></div>
+    </div>
+
+    <!-- Profil -->
+    <div id="screen-profil" class="screen">
+      <div class="screen-header">
+        <div><h1>Profil</h1></div>
+      </div>
+      <div class="profil-section">
+        <h3>Identité</h3>
+        <div class="form-group"><label>Rôle</label><input type="text" id="profil-role" /></div>
+        <div class="form-group"><label>Contexte</label><textarea id="profil-context"></textarea></div>
+        <div class="form-group"><label>Objectif</label><input type="text" id="profil-goal" /></div>
+      </div>
+      <div class="profil-section">
+        <h3>Style de lecture</h3>
+        <div class="form-group">
+          <label>Ton préféré</label>
+          <select id="profil-style">
+            <option value="concis et actionnable">Concis et actionnable</option>
+            <option value="narratif et inspirant">Narratif et inspirant</option>
+            <option value="analytique et factuel">Analytique et factuel</option>
+            <option value="pédagogique et progressif">Pédagogique et progressif</option>
+          </select>
+        </div>
+      </div>
+      <div class="profil-section">
+        <h3>Clé API</h3>
+        <div class="form-group">
+          <label>Clé Anthropic</label>
+          <div class="api-key-row">
+            <input type="password" id="profil-apikey" placeholder="sk-ant-…" autocomplete="off" />
+            <button class="btn-ghost" onclick="toggleApiKeyVisibility()">👁</button>
+          </div>
+        </div>
+      </div>
+      <div class="save-bar">
+        <button class="btn-primary" onclick="saveProfile()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Enregistrer
+        </button>
+      </div>
+    </div>
+
+    <!-- Historique -->
+    <div id="screen-history" class="screen">
+      <div class="screen-header">
+        <div>
+          <h1>Historique</h1>
+          <div class="subtitle">Vos briefs passés</div>
+        </div>
+        <button class="btn-ghost" onclick="clearHistory()" style="color:#e05;">Effacer</button>
+      </div>
+      <div id="history-container"></div>
+    </div>
+
+    <!-- Nav -->
+    <nav>
+      <button class="nav-btn active" id="nav-brief" onclick="showScreen('brief')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Brief
+      </button>
+      <button class="nav-btn" id="nav-themes" onclick="showScreen('themes')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        Thèmes
+      </button>
+      <button class="nav-btn" id="nav-profil" onclick="showScreen('profil')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profil
+      </button>
+      <button class="nav-btn" id="nav-history" onclick="showScreen('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
+        Historique
+      </button>
+    </nav>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ─── Constants ────────────────────────────────────────────
+const THEMES_DEFAULT = {
+  "Cultures": ["Hong Kong", "Espagne", "Pologne", "Émirats arabes unis"],
+  "Pro": ["Management", "IT & Tech", "Mode & textile"],
+  "Passions": ["Jeux vidéo", "Intelligence artificielle", "Interculturel"],
+  "Développement": ["Leadership", "Développement personnel"]
+};
+
+const DAYS = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+const MONTHS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+
+// ─── Storage helpers ──────────────────────────────────────
+const store = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+};
+
+function getProfile() {
+  return store.get('mb_profile') || {};
+}
+function getThemes() {
+  return store.get('mb_themes') || Object.values(THEMES_DEFAULT).flat();
+}
+function getApiKey() {
+  return localStorage.getItem('mb_apikey') || '';
+}
+function getHistory() {
+  return store.get('mb_history') || [];
+}
+
+// ─── Init ─────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  if (!getApiKey()) {
+    document.getElementById('screen-setup').style.display = 'flex';
+    document.getElementById('main-app').style.display = 'none';
+  } else {
+    document.getElementById('screen-setup').style.display = 'none';
+    document.getElementById('main-app').style.display = 'flex';
+    initApp();
+  }
+});
+
+function initApp() {
+  renderBriefScreen();
+  renderThemes();
+  renderProfile();
+  renderHistory();
+}
+
+// ─── Setup ────────────────────────────────────────────────
+function setupSave() {
+  const key = document.getElementById('setup-apikey').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    toast('Clé API invalide — doit commencer par sk-ant-');
+    return;
+  }
+  localStorage.setItem('mb_apikey', key);
+  store.set('mb_profile', {
+    role: document.getElementById('setup-role').value.trim(),
+    context: document.getElementById('setup-context').value.trim(),
+    goal: document.getElementById('setup-goal').value.trim(),
+    style: 'concis et actionnable',
+  });
+  // Default themes all selected
+  store.set('mb_themes', Object.values(THEMES_DEFAULT).flat());
+
+  document.getElementById('screen-setup').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  initApp();
+}
+
+// ─── Navigation ───────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+}
+
+// ─── Brief screen ─────────────────────────────────────────
+function renderBriefScreen() {
+  const now = new Date();
+  document.getElementById('brief-date').textContent =
+    `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  const h = now.getHours();
+  const greeting = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  const profile = getProfile();
+  const firstName = profile.role ? profile.role.split(' ')[0] : '';
+  document.getElementById('brief-greeting').textContent = `${greeting} ! Votre brief vous attend.`;
+}
+
+async function generateBrief() {
+  const apiKey = getApiKey();
+  if (!apiKey) { toast('Clé API manquante'); return; }
+
+  const profile = getProfile();
+  const themes = getThemes();
+  const btn = document.getElementById('btn-generate');
+  const container = document.getElementById('articles-container');
+
+  btn.disabled = true;
+  container.innerHTML = `
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>L'IA compose votre brief…</p>
+    </div>`;
+
+  const prompt = buildPrompt(profile, themes);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const raw = data.content[0].text;
+    const articles = parseArticles(raw);
+
+    if (!articles.length) throw new Error('Format de réponse inattendu');
+
+    renderArticles(articles, container);
+    saveToHistory(articles);
+    document.getElementById('brief-subtitle').textContent = `${articles.length} articles générés aujourd'hui`;
+
+  } catch (e) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <h3>Erreur</h3>
+        <p>${e.message}</p>
+      </div>`;
+    toast('Erreur : ' + e.message, 4000);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function buildPrompt(profile, themes) {
+  const selected = themes.length ? themes.join(', ') : 'développement personnel, management, technologie';
+  return `Tu es un assistant éditorial expert. Génère exactement 5 articles courts pour le morning brief de cet utilisateur.
+
+PROFIL :
+- Rôle : ${profile.role || 'Professionnel'}
+- Contexte : ${profile.context || ''}
+- Objectif : ${profile.goal || 'Développement personnel et professionnel'}
+- Style souhaité : ${profile.style || 'concis et actionnable'}
+
+THÈMES DISPONIBLES (choisis librement parmi eux pour la surprise) : ${selected}
+
+RÈGLE ABSOLUE : choisis les thèmes de manière surprenante et variée — ne prends pas forcément les thèmes dans l'ordre. L'utilisateur doit être agréablement surpris par la sélection.
+
+Pour chaque article, utilise EXACTEMENT ce format JSON (tableau de 5 objets) :
+
+[
+  {
+    "tag": "NOM DU THÈME",
+    "titre": "Titre accrocheur de l'article",
+    "corps": "3 à 4 phrases informatives et engageantes sur le sujet.",
+    "insight": "Une action concrète ou réflexion à retenir aujourd'hui.",
+    "lecture": "2 min"
+  }
+]
+
+Réponds UNIQUEMENT avec le JSON valide, sans texte avant ou après.`;
+}
+
+function parseArticles(raw) {
+  try {
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) return [];
+    return JSON.parse(match[0]);
+  } catch {
+    return [];
+  }
+}
+
+function renderArticles(articles, container) {
+  container.innerHTML = '<div class="articles-list">' +
+    articles.map(a => `
+      <div class="article-card">
+        <div class="article-meta">
+          <span class="article-tag">${esc(a.tag)}</span>
+          <span class="article-time">⏱ ${esc(a.lecture)}</span>
+        </div>
+        <div class="article-title">${esc(a.titre)}</div>
+        <div class="article-body">${esc(a.corps)}</div>
+        <div class="article-insight">${esc(a.insight)}</div>
+      </div>
+    `).join('') + '</div>';
+}
+
+function saveToHistory(articles) {
+  const history = getHistory();
+  const now = new Date();
+  history.unshift({
+    date: now.toISOString(),
+    label: `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`,
+    articles
+  });
+  // Keep last 30
+  store.set('mb_history', history.slice(0, 30));
+}
+
+// ─── Themes ───────────────────────────────────────────────
+function renderThemes() {
+  const selected = getThemes();
+  const container = document.getElementById('themes-container');
+  container.innerHTML = Object.entries(THEMES_DEFAULT).map(([cat, tags]) => `
+    <div class="themes-category">
+      <h3>${cat}</h3>
+      <div class="themes-grid">
+        ${tags.map(t => `
+          <div class="theme-tag ${selected.includes(t) ? 'selected' : ''}"
+               onclick="toggleTheme(this, '${t.replace(/'/g, "\\'")}')">
+            ${esc(t)}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleTheme(el, tag) {
+  el.classList.toggle('selected');
+  const selected = Array.from(document.querySelectorAll('.theme-tag.selected'))
+    .map(e => e.textContent.trim());
+  store.set('mb_themes', selected);
+  toast(el.classList.contains('selected') ? `"${tag}" ajouté` : `"${tag}" retiré`);
+}
+
+// ─── Profile ──────────────────────────────────────────────
+function renderProfile() {
+  const p = getProfile();
+  document.getElementById('profil-role').value = p.role || '';
+  document.getElementById('profil-context').value = p.context || '';
+  document.getElementById('profil-goal').value = p.goal || '';
+  document.getElementById('profil-style').value = p.style || 'concis et actionnable';
+  document.getElementById('profil-apikey').value = getApiKey();
+}
+
+function saveProfile() {
+  const key = document.getElementById('profil-apikey').value.trim();
+  if (key && !key.startsWith('sk-ant-')) {
+    toast('Clé API invalide');
+    return;
+  }
+  if (key) localStorage.setItem('mb_apikey', key);
+  store.set('mb_profile', {
+    role: document.getElementById('profil-role').value.trim(),
+    context: document.getElementById('profil-context').value.trim(),
+    goal: document.getElementById('profil-goal').value.trim(),
+    style: document.getElementById('profil-style').value,
+  });
+  toast('Profil enregistré ✓');
+}
+
+function toggleApiKeyVisibility() {
+  const input = document.getElementById('profil-apikey');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function showApiKeyDialog() {
+  showScreen('profil');
+  setTimeout(() => document.getElementById('profil-apikey').focus(), 300);
+}
+
+// ─── History ──────────────────────────────────────────────
+function renderHistory() {
+  const history = getHistory();
+  const container = document.getElementById('history-container');
+  if (!history.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>Aucun historique</h3>
+        <p>Générez votre premier brief pour le voir apparaître ici.</p>
+      </div>`;
+    return;
+  }
+  container.innerHTML = history.map((entry, i) => `
+    <div class="history-item" onclick="toggleHistoryItem(${i})">
+      <div class="history-item-date">${entry.label}</div>
+      <div class="history-item-preview">${entry.articles.map(a => a.tag).join(' · ')}</div>
+      <div class="history-detail" id="hist-${i}">
+        <div style="margin-top:12px;" class="articles-list">
+          ${entry.articles.map(a => `
+            <div class="article-card" style="animation:none;">
+              <div class="article-meta">
+                <span class="article-tag">${esc(a.tag)}</span>
+                <span class="article-time">⏱ ${esc(a.lecture)}</span>
+              </div>
+              <div class="article-title">${esc(a.titre)}</div>
+              <div class="article-body">${esc(a.corps)}</div>
+              <div class="article-insight">${esc(a.insight)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleHistoryItem(i) {
+  const el = document.getElementById('hist-' + i);
+  el.classList.toggle('open');
+}
+
+function clearHistory() {
+  if (!confirm('Effacer tout l\'historique ?')) return;
+  store.set('mb_history', []);
+  renderHistory();
+  toast('Historique effacé');
+}
+
+// ─── Utilities ────────────────────────────────────────────
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+let toastTimer;
+function toast(msg, duration = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), duration);
+}
+</script>
+</body>
+</html>
