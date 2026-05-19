@@ -33,19 +33,11 @@
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #1a0f08;
-        --bg2: #241508;
-        --surface: #2a1a0e;
-        --border: #3d2a1a;
-        --text: #f5ede4;
-        --text2: #a08060;
-        --accent: #ff7a45;
-        --accent2: #ff5520;
-        --accent-light: #2a1508;
-        --tag-bg: #3d1f0a;
-        --tag-text: #ff9060;
-        --shadow-sm: 0 2px 8px rgba(0,0,0,.3);
-        --shadow-md: 0 4px 20px rgba(0,0,0,.4);
+        --bg: #1a0f08; --bg2: #241508; --surface: #2a1a0e;
+        --border: #3d2a1a; --text: #f5ede4; --text2: #a08060;
+        --accent: #ff7a45; --accent2: #ff5520; --accent-light: #2a1508;
+        --tag-bg: #3d1f0a; --tag-text: #ff9060;
+        --shadow-sm: 0 2px 8px rgba(0,0,0,.3); --shadow-md: 0 4px 20px rgba(0,0,0,.4);
       }
     }
 
@@ -54,66 +46,42 @@
     html, body { height: 100%; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 16px;
-      line-height: 1.55;
-      overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-size: 16px; line-height: 1.55; overflow: hidden;
     }
 
     /* ─── Layout ─────────────────────────────────────────── */
     #app { display: flex; flex-direction: column; height: 100dvh; }
     .screen {
-      display: none;
-      flex: 1;
-      overflow-y: auto;
+      display: none; flex: 1; overflow-y: auto;
       padding: 20px 16px calc(var(--nav-h) + var(--safe-b) + 16px);
     }
     .screen.active { display: block; }
 
     /* ─── Nav ────────────────────────────────────────────── */
     nav {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
+      position: fixed; bottom: 0; left: 0; right: 0;
       height: calc(var(--nav-h) + var(--safe-b));
       padding-bottom: var(--safe-b);
-      background: rgba(255,255,255,.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       border-top: 1px solid var(--border);
-      display: flex;
-      align-items: stretch;
-      z-index: 100;
+      display: flex; align-items: stretch; z-index: 100;
     }
-    @media (prefers-color-scheme: dark) {
-      nav { background: rgba(42,26,14,.88); }
-    }
+    @media (prefers-color-scheme: dark) { nav { background: rgba(42,26,14,.92); } }
     .nav-btn {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text2);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-      transition: color .15s;
-      padding: 8px 4px;
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      color: var(--text2); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.02em; transition: color .15s; padding: 6px 2px;
     }
-    .nav-btn svg { width: 22px; height: 22px; stroke-width: 1.8; }
+    .nav-btn svg { width: 20px; height: 20px; stroke-width: 1.8; }
     .nav-btn.active { color: var(--accent); }
 
     /* ─── Header ─────────────────────────────────────────── */
     .screen-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
     }
     h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
     .subtitle { font-size: 13px; color: var(--text2); margin-top: 2px; }
@@ -121,142 +89,118 @@
     /* ─── Profile switcher ───────────────────────────────── */
     .profile-switcher { position: relative; }
     .profile-avatar-btn {
-      width: 38px; height: 38px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      font-size: 15px;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity .15s;
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--accent); color: #fff; font-size: 15px; font-weight: 700;
+      border: none; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; transition: opacity .15s;
     }
     .profile-avatar-btn:active { opacity: .7; }
     .profile-menu {
-      display: none;
-      position: absolute;
-      top: 46px; right: 0;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: 0 8px 24px rgba(0,0,0,.12);
-      min-width: 210px;
-      z-index: 300;
-      overflow: hidden;
+      display: none; position: absolute; top: 46px; right: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.12);
+      min-width: 210px; z-index: 300; overflow: hidden;
     }
     .profile-menu-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      cursor: pointer;
-      transition: background .1s;
-      font-size: 14px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; cursor: pointer; transition: background .1s; font-size: 14px;
     }
     .profile-menu-item:hover { background: var(--bg2); }
     .profile-menu-item.active { color: var(--accent); font-weight: 600; }
     .profile-menu-item svg { margin-left: auto; flex-shrink: 0; }
     .profile-menu-avatar {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .profile-menu-separator { height: 1px; background: var(--border); margin: 4px 0; }
 
-    /* ─── Profile pills (écran Profil) ──────────────────── */
+    /* ─── Profile pills ──────────────────────────────────── */
     .profiles-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
     .profile-pill {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px 6px 8px;
-      border: 1.5px solid var(--border);
-      border-radius: 999px;
-      background: var(--surface);
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text2);
-      transition: all .15s;
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px 6px 8px; border: 1.5px solid var(--border);
+      border-radius: 999px; background: var(--surface); cursor: pointer;
+      font-size: 13px; font-weight: 500; color: var(--text2); transition: all .15s;
     }
-    .profile-pill.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: var(--accent-light);
-    }
+    .profile-pill.active { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
     .profile-pill-avatar {
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      background: var(--border);
-      color: var(--text2);
-      font-size: 10px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      width: 22px; height: 22px; border-radius: 50%; background: var(--border);
+      color: var(--text2); font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .profile-pill.active .profile-pill-avatar { background: var(--accent); color: #fff; }
     .profile-pill-add { border-style: dashed; }
 
     /* ─── Buttons ────────────────────────────────────────── */
     .btn-primary {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 16px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 16px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
+      color: #fff; border: none; border-radius: var(--radius);
+      font-size: 16px; font-weight: 700; cursor: pointer;
       box-shadow: 0 4px 16px rgba(255,107,53,.35);
-      transition: transform .15s, box-shadow .15s;
-      letter-spacing: 0.01em;
+      transition: transform .15s, box-shadow .15s; letter-spacing: 0.01em;
     }
     .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(255,107,53,.45); }
     .btn-primary:active { transform: scale(.98); box-shadow: none; }
     .btn-primary:disabled { opacity: .5; cursor: default; transform: none; box-shadow: none; }
+    .btn-secondary {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 13px;
+      background: var(--surface); color: var(--accent);
+      border: 1.5px solid var(--accent); border-radius: var(--radius);
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-secondary:hover { background: var(--accent-light); }
     .btn-ghost {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 13px;
-      color: var(--text2);
-      cursor: pointer;
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      padding: 6px 12px; font-size: 13px; color: var(--text2); cursor: pointer;
     }
     .btn-danger {
-      background: none;
-      border: 1px solid #e05;
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 13px;
-      color: #e05;
-      cursor: pointer;
+      background: none; border: 1px solid #e05; border-radius: 8px;
+      padding: 6px 12px; font-size: 13px; color: #e05; cursor: pointer;
     }
+    .btn-icon {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--bg2); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; transition: background .15s, transform .1s;
+      flex-shrink: 0;
+    }
+    .btn-icon:hover { background: var(--border); }
+    .btn-icon:active { transform: scale(.9); }
+    .btn-icon.fav-active { background: #fff3cd; }
+
+    /* ─── Notification banner ────────────────────────────── */
+    #notif-banner {
+      display: none; align-items: center; gap: 12px;
+      background: var(--accent-light); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px;
+    }
+    #notif-banner.visible { display: flex; }
+    #notif-banner span { flex: 1; font-size: 13px; line-height: 1.5; }
+
+    /* ─── Audio bar ──────────────────────────────────────── */
+    .audio-bar {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,.2); border-radius: 10px;
+      padding: 10px 14px; margin-top: 14px;
+    }
+    .audio-bar span { flex: 1; font-size: 13px; color: rgba(255,255,255,.9); }
+    .audio-btn {
+      background: rgba(255,255,255,.25); border: none; border-radius: 50%;
+      width: 34px; height: 34px; color: #fff; cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .audio-btn:hover { background: rgba(255,255,255,.4); }
 
     /* ─── Setup screen ───────────────────────────────────── */
     #screen-setup {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-height: 100dvh;
-      padding: 40px 24px;
+      display: flex; flex-direction: column; justify-content: center;
+      min-height: 100dvh; padding: 40px 24px;
     }
     .setup-logo { font-size: 48px; margin-bottom: 16px; }
     .setup-title { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
@@ -264,53 +208,36 @@
     .form-group { margin-bottom: 16px; }
     label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text2); letter-spacing: 0.02em; text-transform: uppercase; }
     input[type="password"], input[type="text"], textarea, select {
-      width: 100%;
-      padding: 12px 14px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-size: 15px;
-      font-family: inherit;
-      outline: none;
+      width: 100%; padding: 12px 14px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 15px; font-family: inherit; outline: none;
       transition: border-color .15s;
     }
     input:focus, textarea:focus { border-color: var(--accent); }
     textarea { resize: vertical; min-height: 80px; }
     .setup-note {
-      font-size: 12px;
-      color: var(--text2);
-      margin-top: 8px;
-      padding: 10px 12px;
-      background: var(--bg2);
-      border-radius: 8px;
-      line-height: 1.5;
+      font-size: 12px; color: var(--text2); margin-top: 8px; padding: 10px 12px;
+      background: var(--bg2); border-radius: 8px; line-height: 1.5;
     }
     .setup-note a { color: var(--accent); }
 
     /* ─── Brief screen ───────────────────────────────────── */
     .brief-hero {
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-      border-radius: var(--radius);
-      padding: 24px 20px;
-      margin-bottom: 20px;
-      text-align: center;
-      color: #fff;
-      box-shadow: var(--shadow-md);
+      border-radius: var(--radius); padding: 24px 20px; margin-bottom: 20px;
+      text-align: center; color: #fff; box-shadow: var(--shadow-md);
     }
-    .brief-hero .brief-date { color: rgba(255,255,255,.75); }
-    .brief-hero h2 { color: #fff; }
+    .brief-hero .brief-date { color: rgba(255,255,255,.75); margin-bottom: 4px; }
+    .brief-hero h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: #fff; }
     .brief-date { font-size: 13px; color: var(--text2); margin-bottom: 4px; }
-    .brief-hero h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+    .brief-actions { display: flex; gap: 10px; margin-bottom: 16px; }
+    .brief-actions .btn-primary { flex: 2; }
+    .brief-actions .btn-secondary { flex: 1; padding: 13px 10px; font-size: 14px; }
     .articles-list { display: flex; flex-direction: column; gap: 14px; }
     .article-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      border-radius: var(--radius);
-      padding: 18px;
-      box-shadow: var(--shadow-sm);
-      animation: fadeUp .4s ease both;
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 18px;
+      box-shadow: var(--shadow-sm); animation: fadeUp .4s ease both;
       transition: transform .2s, box-shadow .2s;
     }
     .article-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
@@ -318,75 +245,71 @@
       from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .article-card:nth-child(1) { animation-delay: .05s; }
-    .article-card:nth-child(2) { animation-delay: .1s; }
-    .article-card:nth-child(3) { animation-delay: .15s; }
-    .article-card:nth-child(4) { animation-delay: .2s; }
-    .article-card:nth-child(5) { animation-delay: .25s; }
+    .article-card:nth-child(1) { animation-delay:.05s; }
+    .article-card:nth-child(2) { animation-delay:.1s; }
+    .article-card:nth-child(3) { animation-delay:.15s; }
+    .article-card:nth-child(4) { animation-delay:.2s; }
+    .article-card:nth-child(5) { animation-delay:.25s; }
     .article-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
     .article-tag {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      background: var(--tag-bg);
-      color: var(--tag-text);
-      padding: 3px 8px;
-      border-radius: 6px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+      background: var(--tag-bg); color: var(--tag-text); padding: 3px 8px; border-radius: 6px;
     }
     .article-time { font-size: 12px; color: var(--text2); margin-left: auto; }
     .article-title { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; line-height: 1.3; }
     .article-body { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
     .article-insight {
-      display: flex;
-      gap: 10px;
-      background: var(--accent-light);
-      border-radius: 10px;
-      padding: 12px;
-      font-size: 13px;
-      line-height: 1.5;
+      display: flex; gap: 10px; background: var(--accent-light);
+      border-radius: 10px; padding: 12px; font-size: 13px; line-height: 1.5; margin-bottom: 12px;
     }
     .article-insight::before { content: "⚡"; flex-shrink: 0; font-size: 14px; }
+    .article-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
-    /* Loading / Empty states */
-    .loading-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 48px 0;
-      color: var(--text2);
+    /* ─── Immersive reader ───────────────────────────────── */
+    .reader-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.7); backdrop-filter: blur(8px);
+      z-index: 500; align-items: center; justify-content: center; padding: 24px;
     }
-    .spinner {
-      width: 36px; height: 36px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
+    .reader-overlay.open { display: flex; }
+    .reader-modal {
+      background: var(--surface); border-radius: 20px;
+      max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto;
+      padding: 32px 28px; box-shadow: 0 24px 64px rgba(0,0,0,.3);
+      animation: slideUp .3s ease;
     }
+    @keyframes slideUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+    .reader-close {
+      float: right; background: var(--bg2); border: none; border-radius: 50%;
+      width: 36px; height: 36px; cursor: pointer; font-size: 18px; color: var(--text2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .reader-tag { display: inline-block; margin-bottom: 16px; }
+    .reader-title { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 16px; }
+    .reader-body { font-size: 17px; color: var(--text2); line-height: 1.75; margin-bottom: 20px; }
+    .reader-insight {
+      background: var(--accent-light); border-radius: 12px; padding: 16px;
+      font-size: 15px; line-height: 1.6; display: flex; gap: 12px;
+    }
+    .reader-insight::before { content: "⚡"; font-size: 18px; flex-shrink: 0; }
+    .reader-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .reader-actions button { flex: 1; }
+
+    /* ─── Loading / Empty ────────────────────────────────── */
+    .loading-state { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 48px 0; color: var(--text2); }
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-state p { font-size: 14px; }
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      padding: 48px 0;
-      text-align: center;
-    }
+    .empty-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px 0; text-align: center; }
     .empty-icon { font-size: 48px; }
     .empty-state h3 { font-size: 18px; font-weight: 600; }
     .empty-state p { font-size: 14px; color: var(--text2); max-width: 260px; }
 
     /* ─── Historique ─────────────────────────────────────── */
     .history-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 18px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      transition: border-color .15s;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px;
+      cursor: pointer; transition: border-color .15s;
     }
     .history-item:hover { border-color: var(--accent); }
     .history-item-date { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
@@ -394,67 +317,58 @@
     .history-detail { display: none; }
     .history-detail.open { display: block; }
 
+    /* ─── Stats ──────────────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; text-align: center;
+    }
+    .stat-value { font-size: 28px; font-weight: 800; color: var(--accent); }
+    .stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+    .stats-tags { margin-bottom: 24px; }
+    .stats-tags h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 12px; }
+    .stats-tag-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 14px; }
+    .stats-tag-bar-wrap { flex: 1; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+    .stats-tag-bar { height: 100%; background: var(--accent); border-radius: 3px; transition: width .6s ease; }
+    .stats-tag-count { font-size: 12px; color: var(--text2); min-width: 24px; text-align: right; }
+
+    /* ─── Favoris ────────────────────────────────────────── */
+    .fav-empty { padding: 48px 0; text-align: center; }
+
     /* ─── Thèmes ─────────────────────────────────────────── */
     .themes-category { margin-bottom: 24px; }
-    .themes-category h3 {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 10px;
-    }
+    .themes-category h3 { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
     .themes-grid { display: flex; flex-wrap: wrap; gap: 8px; }
     .theme-tag {
-      padding: 7px 14px;
-      border-radius: 999px;
-      border: 1.5px solid var(--border);
-      background: var(--surface);
-      color: var(--text2);
-      font-size: 14px;
-      cursor: pointer;
-      transition: all .15s;
-      user-select: none;
+      padding: 7px 14px; border-radius: 999px; border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text2); font-size: 14px;
+      cursor: pointer; transition: all .15s; user-select: none;
     }
-    .theme-tag.selected {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
+    .theme-tag.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
 
     /* ─── Profil ─────────────────────────────────────────── */
     .profil-section { margin-bottom: 24px; }
     .profil-section h3 {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--text2);
-      margin-bottom: 12px;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text2); margin-bottom: 12px;
     }
-    .save-bar {
-      position: sticky;
-      bottom: calc(var(--nav-h) + var(--safe-b) + 12px);
-      padding: 12px 0 0;
-    }
+    .save-bar { position: sticky; bottom: calc(var(--nav-h) + var(--safe-b) + 12px); padding: 12px 0 0; }
     .api-key-row { display: flex; align-items: center; gap: 8px; }
     .api-key-row input { flex: 1; }
+    .notif-row { display: flex; align-items: center; justify-content: space-between; }
+    .notif-row label { text-transform: none; font-size: 14px; font-weight: 500; margin: 0; color: var(--text); }
+    .notif-time { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .notif-time input[type="time"] { width: auto; padding: 8px 12px; }
 
     /* ─── Toast ──────────────────────────────────────────── */
     #toast {
       position: fixed;
-      bottom: calc(var(--nav-h) + var(--safe-b) + 16px);
-      left: 50%;
+      bottom: calc(var(--nav-h) + var(--safe-b) + 16px); left: 50%;
       transform: translateX(-50%) translateY(20px);
-      background: var(--text);
-      color: var(--bg);
-      padding: 10px 20px;
-      border-radius: 999px;
-      font-size: 14px;
-      font-weight: 500;
-      opacity: 0;
-      transition: opacity .25s, transform .25s;
-      pointer-events: none;
-      white-space: nowrap;
-      z-index: 400;
+      background: var(--text); color: var(--bg);
+      padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 500;
+      opacity: 0; transition: opacity .25s, transform .25s;
+      pointer-events: none; white-space: nowrap; z-index: 400;
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -464,46 +378,30 @@
       #screen-setup { max-width: 520px; margin: 0 auto; padding: 60px 40px; }
       #main-app { flex-direction: row !important; height: 100vh; max-width: 1140px; margin: 0 auto; }
       nav {
-        position: static;
-        order: -1;
-        width: 220px;
-        flex-shrink: 0;
-        flex-direction: column;
-        align-items: stretch;
-        height: 100vh;
-        border-top: none;
-        border-right: 1px solid var(--border);
-        padding: 28px 12px 24px;
-        overflow: visible;
+        position: static; order: -1; width: 220px; flex-shrink: 0;
+        flex-direction: column; align-items: stretch; height: 100vh;
+        border-top: none; border-right: 1px solid var(--border);
+        padding: 28px 12px 24px; overflow: visible;
       }
       .nav-brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 4px 12px 28px;
-        font-size: 15px;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        color: var(--text);
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 12px;
+        display: flex; align-items: center; gap: 10px;
+        padding: 4px 12px 28px; font-size: 15px; font-weight: 700;
+        letter-spacing: -0.02em; color: var(--text);
+        border-bottom: 1px solid var(--border); margin-bottom: 12px;
       }
       .nav-brand-icon { font-size: 22px; }
       .nav-btn {
-        flex-direction: row;
-        justify-content: flex-start;
-        padding: 11px 16px;
-        gap: 12px;
-        font-size: 14px;
-        border-radius: 10px;
-        width: 100%;
-        flex: none;
+        flex-direction: row; justify-content: flex-start;
+        padding: 11px 16px; gap: 12px; font-size: 14px;
+        border-radius: 10px; width: 100%; flex: none;
       }
       .nav-btn svg { flex-shrink: 0; }
       .screen { flex: 1; padding: 40px 52px; overflow-y: auto; max-width: 820px; }
       .articles-list { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
       .save-bar { position: static; padding: 16px 0 0; }
       #toast { bottom: 24px; }
+      .brief-actions { flex-wrap: wrap; }
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
     }
   </style>
 </head>
@@ -515,7 +413,6 @@
     <div class="setup-logo">☀️</div>
     <div class="setup-title">Morning Brief</div>
     <div class="setup-desc">Votre brief personnalisé chaque matin, généré par l'IA en 5 articles sur-mesure.</div>
-
     <div class="form-group">
       <label>Votre prénom</label>
       <input type="text" id="setup-name" placeholder="Ex : Guillaume" />
@@ -561,17 +458,46 @@
           <div id="profile-menu" class="profile-menu"></div>
         </div>
       </div>
+      <div id="notif-banner" class="visible">
+        <span>🔔 Recevez votre brief chaque matin à l'heure que vous choisissez.</span>
+        <button class="btn-ghost" onclick="requestNotifPermission()">Activer</button>
+        <button class="btn-ghost" onclick="dismissNotifBanner()" style="padding:6px 8px;">✕</button>
+      </div>
       <div class="brief-hero">
         <div class="brief-date" id="brief-date"></div>
         <h2 id="brief-greeting">Bonjour !</h2>
+        <div class="audio-bar" id="audio-bar" style="display:none;">
+          <span id="audio-label">Écoute en cours…</span>
+          <button class="audio-btn" id="audio-btn" onclick="toggleAudio()">⏸</button>
+        </div>
       </div>
-      <div style="margin-bottom:16px;">
+      <div class="brief-actions">
         <button class="btn-primary" id="btn-generate" onclick="generateBrief()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>
           Générer mon brief
         </button>
+        <button class="btn-secondary" id="btn-weekly" onclick="generateWeekly()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Hebdo
+        </button>
+        <button class="btn-secondary" id="btn-audio" onclick="readBriefAloud()" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          Écouter
+        </button>
       </div>
       <div id="articles-container"></div>
+    </div>
+
+    <!-- Favoris -->
+    <div id="screen-favoris" class="screen">
+      <div class="screen-header">
+        <div>
+          <h1>Favoris</h1>
+          <div class="subtitle" id="fav-subtitle">Vos articles sauvegardés</div>
+        </div>
+        <button class="btn-ghost" onclick="clearFavorites()" style="color:#e05;">Effacer</button>
+      </div>
+      <div id="favoris-container"></div>
     </div>
 
     <!-- Thèmes -->
@@ -593,7 +519,6 @@
         <h3>Profils</h3>
         <div class="profiles-pills" id="profiles-pills"></div>
       </div>
-
       <div class="profil-section">
         <h3>Identité</h3>
         <div class="form-group"><label>Prénom / Nom du profil</label><input type="text" id="profil-name" /></div>
@@ -611,6 +536,17 @@
             <option value="analytique et factuel">Analytique et factuel</option>
             <option value="pédagogique et progressif">Pédagogique et progressif</option>
           </select>
+        </div>
+      </div>
+      <div class="profil-section">
+        <h3>Notifications</h3>
+        <div class="notif-row">
+          <label>Brief quotidien automatique</label>
+          <button class="btn-ghost" id="notif-toggle-btn" onclick="toggleNotifSetting()">Activer</button>
+        </div>
+        <div class="notif-time" id="notif-time-row" style="display:none;">
+          <span style="font-size:14px;">Heure :</span>
+          <input type="time" id="notif-time" value="07:30" onchange="saveNotifTime()" />
         </div>
       </div>
       <div class="profil-section">
@@ -635,7 +571,7 @@
       </div>
     </div>
 
-    <!-- Historique -->
+    <!-- Historique + Stats -->
     <div id="screen-history" class="screen">
       <div class="screen-header">
         <div>
@@ -644,6 +580,7 @@
         </div>
         <button class="btn-ghost" onclick="clearHistory()" style="color:#e05;">Effacer</button>
       </div>
+      <div id="stats-container"></div>
       <div id="history-container"></div>
     </div>
 
@@ -653,6 +590,10 @@
       <button class="nav-btn active" id="nav-brief" onclick="showScreen('brief')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
         Brief
+      </button>
+      <button class="nav-btn" id="nav-favoris" onclick="showScreen('favoris')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Favoris
       </button>
       <button class="nav-btn" id="nav-themes" onclick="showScreen('themes')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
@@ -664,16 +605,33 @@
       </button>
       <button class="nav-btn" id="nav-history" onclick="showScreen('history')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
-        Historique
+        Stats
       </button>
     </nav>
+  </div>
+</div>
+
+<!-- ══ IMMERSIVE READER ════════════════════════════════════ -->
+<div class="reader-overlay" id="reader-overlay" onclick="closeReaderOnBg(event)">
+  <div class="reader-modal" id="reader-modal">
+    <button class="reader-close" onclick="closeReader()">✕</button>
+    <div style="clear:both; margin-bottom:8px;"></div>
+    <div id="reader-tag" class="reader-tag article-tag"></div>
+    <div id="reader-title" class="reader-title"></div>
+    <div id="reader-body" class="reader-body"></div>
+    <div id="reader-insight" class="reader-insight"></div>
+    <div class="reader-actions">
+      <button class="btn-secondary" id="reader-fav-btn" onclick="readerToggleFav()">⭐ Sauvegarder</button>
+      <button class="btn-secondary" onclick="readerShare()">↗ Partager</button>
+      <button class="btn-secondary" onclick="readerRead()">🔊 Écouter</button>
+    </div>
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-// ─── Thèmes (~120 tags, 10 catégories) ───────────────────
+// ─── Thèmes (~120 tags) ───────────────────────────────────
 const THEMES_DEFAULT = {
   "🌍 Géopolitique": ["États-Unis","Chine","Russie","Union européenne","France","Espagne","Pologne","Hong Kong","Émirats arabes unis","Inde","Japon","Corée du Sud","Moyen-Orient","Afrique","Amérique latine","Turquie","Royaume-Uni","Israël & Palestine","Asean","Océanie"],
   "💡 Tech & IA": ["Intelligence artificielle","Startups & Innovation","Cybersécurité","Blockchain & Web3","Big Data & Analytics","Robotique","Exploration spatiale","5G & Connectivité","Open Source","Gaming & Esport","Réalité virtuelle & AR","Quantum Computing","SaaS & Cloud","Semiconducteurs"],
@@ -696,9 +654,7 @@ const store = {
   get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
   set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
 };
-function genId() {
-  return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-}
+function genId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 // ─── Profile helpers ──────────────────────────────────────
 function getProfiles() { return store.get('mb_profiles') || []; }
@@ -730,21 +686,47 @@ function saveToHistory(articles) {
   store.set(key, history.slice(0, 30));
 }
 
-// ─── Migration depuis l'ancien format ────────────────────
+// ─── Favorites ────────────────────────────────────────────
+function getFavorites() { return store.get('mb_favorites') || []; }
+function isFavorite(titre) { return getFavorites().some(a => a.titre === titre); }
+function toggleFavorite(article) {
+  let favs = getFavorites();
+  if (isFavorite(article.titre)) {
+    favs = favs.filter(a => a.titre !== article.titre);
+    toast('Retiré des favoris');
+  } else {
+    favs.unshift({ ...article, savedAt: new Date().toISOString() });
+    toast('⭐ Ajouté aux favoris');
+  }
+  store.set('mb_favorites', favs);
+  refreshFavButtons(article.titre);
+  if (document.getElementById('screen-favoris').classList.contains('active')) renderFavorites();
+}
+function refreshFavButtons(titre) {
+  const fav = isFavorite(titre);
+  document.querySelectorAll(`.fav-btn[data-titre="${CSS.escape(titre)}"]`).forEach(btn => {
+    btn.textContent = fav ? '⭐' : '☆';
+    btn.classList.toggle('fav-active', fav);
+  });
+}
+function clearFavorites() {
+  if (!confirm('Effacer tous les favoris ?')) return;
+  store.set('mb_favorites', []);
+  renderFavorites();
+  toast('Favoris effacés');
+}
+
+// ─── Migration ────────────────────────────────────────────
 function migrateIfNeeded() {
   if (getProfiles().length > 0) return;
   const oldProfile = store.get('mb_profile') || {};
   const oldKey = localStorage.getItem('mb_apikey') || '';
   if (!oldKey) return;
   const profile = {
-    id: genId(),
-    name: 'Mon profil',
-    role: oldProfile.role || '',
-    context: oldProfile.context || '',
-    goal: oldProfile.goal || '',
-    style: oldProfile.style || 'concis et actionnable',
-    themes: store.get('mb_themes') || ALL_THEMES,
-    apikey: oldKey,
+    id: genId(), name: 'Mon profil',
+    role: oldProfile.role || '', context: oldProfile.context || '',
+    goal: oldProfile.goal || '', style: oldProfile.style || 'concis et actionnable',
+    themes: store.get('mb_themes') || ALL_THEMES, apikey: oldKey,
   };
   store.set('mb_profiles', [profile]);
   setActiveProfileId(profile.id);
@@ -771,7 +753,10 @@ function initApp() {
   renderThemes();
   renderProfile();
   renderHistory();
+  renderFavorites();
   renderProfileSwitcher();
+  checkNotifBanner();
+  scheduleNotifCheck();
 }
 
 // ─── Setup ────────────────────────────────────────────────
@@ -784,9 +769,7 @@ function setupSave() {
     role: document.getElementById('setup-role').value.trim(),
     context: document.getElementById('setup-context').value.trim(),
     goal: document.getElementById('setup-goal').value.trim(),
-    style: 'concis et actionnable',
-    themes: ALL_THEMES,
-    apikey: key,
+    style: 'concis et actionnable', themes: ALL_THEMES, apikey: key,
   };
   store.set('mb_profiles', [profile]);
   setActiveProfileId(profile.id);
@@ -801,7 +784,6 @@ function renderProfileSwitcher() {
   const btn = document.getElementById('profile-avatar-btn');
   if (btn) btn.textContent = p.name ? p.name[0].toUpperCase() : '?';
 }
-
 function toggleProfileMenu() {
   const menu = document.getElementById('profile-menu');
   if (!menu) return;
@@ -821,24 +803,9 @@ function toggleProfileMenu() {
     </div>`;
   menu.style.display = 'block';
 }
-
-function closeProfileMenu() {
-  const m = document.getElementById('profile-menu');
-  if (m) m.style.display = 'none';
-}
-
-document.addEventListener('click', e => {
-  const sw = document.querySelector('.profile-switcher');
-  if (sw && !sw.contains(e.target)) closeProfileMenu();
-});
-
-function switchProfile(id) {
-  setActiveProfileId(id);
-  closeProfileMenu();
-  initApp();
-  toast('Profil changé');
-}
-
+function closeProfileMenu() { const m = document.getElementById('profile-menu'); if (m) m.style.display = 'none'; }
+document.addEventListener('click', e => { const sw = document.querySelector('.profile-switcher'); if (sw && !sw.contains(e.target)) closeProfileMenu(); });
+function switchProfile(id) { setActiveProfileId(id); closeProfileMenu(); initApp(); toast('Profil changé'); }
 function createProfile() {
   closeProfileMenu();
   const name = prompt('Prénom ou nom du profil :');
@@ -848,11 +815,9 @@ function createProfile() {
   profiles.push(profile);
   store.set('mb_profiles', profiles);
   setActiveProfileId(profile.id);
-  initApp();
-  showScreen('profil');
+  initApp(); showScreen('profil');
   toast(`Profil "${profile.name}" créé — complète les informations`);
 }
-
 function deleteActiveProfile() {
   const profiles = getProfiles();
   if (profiles.length <= 1) { toast('Impossible de supprimer le seul profil'); return; }
@@ -861,10 +826,8 @@ function deleteActiveProfile() {
   const newProfiles = profiles.filter(x => x.id !== p.id);
   store.set('mb_profiles', newProfiles);
   setActiveProfileId(newProfiles[0].id);
-  initApp();
-  toast('Profil supprimé');
+  initApp(); toast('Profil supprimé');
 }
-
 function renderProfilePills() {
   const profiles = getProfiles();
   const activeId = getActiveProfileId();
@@ -880,14 +843,8 @@ function renderProfilePills() {
       <span>Nouveau</span>
     </div>`;
 }
-
 function switchProfileInEditor(id) {
-  setActiveProfileId(id);
-  renderProfileSwitcher();
-  renderProfile();
-  renderThemes();
-  renderHistory();
-  toast('Profil chargé');
+  setActiveProfileId(id); renderProfileSwitcher(); renderProfile(); renderThemes(); renderHistory(); toast('Profil chargé');
 }
 
 // ─── Navigation ───────────────────────────────────────────
@@ -896,6 +853,8 @@ function showScreen(name) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'history') { renderStats(); renderHistory(); }
+  if (name === 'favoris') renderFavorites();
 }
 
 // ─── Brief ────────────────────────────────────────────────
@@ -909,36 +868,42 @@ function renderBriefScreen() {
   renderProfileSwitcher();
 }
 
-async function generateBrief() {
+let _lastArticles = [];
+
+async function generateBrief(weekly = false) {
   const apiKey = getApiKey();
   if (!apiKey) { toast('Clé API manquante'); return; }
-  const btn = document.getElementById('btn-generate');
+  const btn = weekly ? document.getElementById('btn-weekly') : document.getElementById('btn-generate');
   const container = document.getElementById('articles-container');
   btn.disabled = true;
-  container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>L'IA compose votre brief…</p></div>`;
+  document.getElementById('btn-audio').style.display = 'none';
+  container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>${weekly ? 'Génération du brief hebdomadaire…' : 'L\'IA compose votre brief…'}</p></div>`;
   try {
+    const prompt = weekly ? buildWeeklyPrompt(getProfile()) : buildPrompt(getProfile(), getThemes());
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
+        'Content-Type': 'application/json', 'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true',
       },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: buildPrompt(getProfile(), getThemes()) }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
     const data = await res.json();
     const articles = parseArticles(data.content[0].text);
     if (!articles.length) throw new Error('Format de réponse inattendu');
+    _lastArticles = articles;
     renderArticles(articles, container);
     saveToHistory(articles);
-    document.getElementById('brief-subtitle').textContent = `${articles.length} articles générés aujourd'hui`;
+    document.getElementById('brief-subtitle').textContent = `${articles.length} articles ${weekly ? 'hebdo' : 'du jour'}`;
+    document.getElementById('btn-audio').style.display = 'flex';
   } catch (e) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Erreur</h3><p>${e.message}</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Erreur</h3><p>${esc(e.message)}</p></div>`;
     toast('Erreur : ' + e.message, 4000);
   } finally { btn.disabled = false; }
 }
+
+function generateWeekly() { generateBrief(true); }
 
 function buildPrompt(profile, themes) {
   const selected = themes.length ? themes.join(', ') : 'développement personnel, management, technologie';
@@ -963,13 +928,34 @@ Format EXACT — tableau JSON de 5 objets :
 Réponds UNIQUEMENT avec le JSON valide.`;
 }
 
+function buildWeeklyPrompt(profile) {
+  const history = getHistory().slice(0, 7);
+  const covered = history.flatMap(h => h.articles.map(a => a.tag));
+  const topTags = [...new Set(covered)].slice(0, 8).join(', ') || 'management, IA, géopolitique';
+  return `Tu es un assistant éditorial expert. Génère un brief hebdomadaire de 5 articles synthétiques.
+
+PROFIL :
+- Rôle : ${profile.role || 'Professionnel'}
+- Contexte : ${profile.context || ''}
+- Style souhaité : ${profile.style || 'concis et actionnable'}
+
+THÈMES DE LA SEMAINE à synthétiser : ${topTags}
+
+Génère 5 articles de synthèse hebdomadaire, tendances et perspectives de la semaine.
+
+Format EXACT :
+[{"tag":"THÈME","titre":"Titre","corps":"3-4 phrases de synthèse hebdomadaire.","insight":"Perspective pour la semaine à venir.","lecture":"3 min"}]
+
+Réponds UNIQUEMENT avec le JSON valide.`;
+}
+
 function parseArticles(raw) {
   try { const m = raw.match(/\[[\s\S]*\]/); return m ? JSON.parse(m[0]) : []; } catch { return []; }
 }
 
 function renderArticles(articles, container) {
-  container.innerHTML = '<div class="articles-list">' + articles.map(a => `
-    <div class="article-card">
+  container.innerHTML = '<div class="articles-list">' + articles.map((a, i) => `
+    <div class="article-card" onclick="openReader(${i})" style="cursor:pointer;">
       <div class="article-meta">
         <span class="article-tag">${esc(a.tag)}</span>
         <span class="article-time">⏱ ${esc(a.lecture)}</span>
@@ -977,7 +963,182 @@ function renderArticles(articles, container) {
       <div class="article-title">${esc(a.titre)}</div>
       <div class="article-body">${esc(a.corps)}</div>
       <div class="article-insight">${esc(a.insight)}</div>
+      <div class="article-actions" onclick="event.stopPropagation()">
+        <button class="btn-icon fav-btn ${isFavorite(a.titre) ? 'fav-active' : ''}" data-titre="${esc(a.titre)}" onclick="toggleFavorite(_lastArticles[${i}])" title="Favori">${isFavorite(a.titre) ? '⭐' : '☆'}</button>
+        <button class="btn-icon" onclick="shareArticle(_lastArticles[${i}])" title="Partager">↗</button>
+        <button class="btn-icon" onclick="openReader(${i})" title="Lire">📖</button>
+      </div>
     </div>`).join('') + '</div>';
+}
+
+// ─── Immersive reader ─────────────────────────────────────
+let _readerIdx = -1;
+function openReader(i) {
+  _readerIdx = i;
+  const a = _lastArticles[i];
+  if (!a) return;
+  document.getElementById('reader-tag').textContent = a.tag;
+  document.getElementById('reader-title').textContent = a.titre;
+  document.getElementById('reader-body').textContent = a.corps;
+  document.getElementById('reader-insight').textContent = a.insight;
+  const favBtn = document.getElementById('reader-fav-btn');
+  favBtn.textContent = isFavorite(a.titre) ? '⭐ Sauvegardé' : '☆ Sauvegarder';
+  document.getElementById('reader-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeReader() {
+  stopReading();
+  document.getElementById('reader-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeReaderOnBg(e) { if (e.target === document.getElementById('reader-overlay')) closeReader(); }
+function readerToggleFav() {
+  if (_readerIdx < 0) return;
+  const a = _lastArticles[_readerIdx];
+  toggleFavorite(a);
+  document.getElementById('reader-fav-btn').textContent = isFavorite(a.titre) ? '⭐ Sauvegardé' : '☆ Sauvegarder';
+}
+function readerShare() { if (_readerIdx >= 0) shareArticle(_lastArticles[_readerIdx]); }
+function readerRead() {
+  if (_readerIdx < 0) return;
+  const a = _lastArticles[_readerIdx];
+  speakText(`${a.tag}. ${a.titre}. ${a.corps} ${a.insight}`);
+}
+
+// ─── Share ────────────────────────────────────────────────
+function shareArticle(a) {
+  const text = `${a.titre}\n\n${a.corps}\n\n⚡ ${a.insight}\n\n— Morning Brief`;
+  if (navigator.share) {
+    navigator.share({ title: a.titre, text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => toast('Article copié dans le presse-papier')).catch(() => toast('Partage non disponible'));
+  }
+}
+
+// ─── Text-to-speech ───────────────────────────────────────
+let _utterance = null;
+let _speechPaused = false;
+
+function readBriefAloud() {
+  if (!_lastArticles.length) { toast('Générez d\'abord un brief'); return; }
+  const text = _lastArticles.map(a => `${a.tag}. ${a.titre}. ${a.corps} ${a.insight}`).join('. Prochain article. ');
+  speakText(text);
+}
+
+function speakText(text) {
+  stopReading();
+  if (!window.speechSynthesis) { toast('Synthèse vocale non supportée'); return; }
+  _utterance = new SpeechSynthesisUtterance(text);
+  _utterance.lang = 'fr-FR'; _utterance.rate = 1.05;
+  _utterance.onstart = () => {
+    document.getElementById('audio-bar').style.display = 'flex';
+    document.getElementById('audio-label').textContent = 'Lecture en cours…';
+    document.getElementById('audio-btn').textContent = '⏸';
+    _speechPaused = false;
+  };
+  _utterance.onend = _utterance.onerror = () => {
+    document.getElementById('audio-bar').style.display = 'none';
+    _utterance = null;
+  };
+  speechSynthesis.speak(_utterance);
+}
+
+function toggleAudio() {
+  if (!window.speechSynthesis) return;
+  if (_speechPaused) {
+    speechSynthesis.resume();
+    _speechPaused = false;
+    document.getElementById('audio-btn').textContent = '⏸';
+    document.getElementById('audio-label').textContent = 'Lecture en cours…';
+  } else {
+    speechSynthesis.pause();
+    _speechPaused = true;
+    document.getElementById('audio-btn').textContent = '▶';
+    document.getElementById('audio-label').textContent = 'En pause';
+  }
+}
+
+function stopReading() {
+  if (window.speechSynthesis) { speechSynthesis.cancel(); }
+  document.getElementById('audio-bar').style.display = 'none';
+  _utterance = null; _speechPaused = false;
+}
+
+// ─── Notifications ────────────────────────────────────────
+function checkNotifBanner() {
+  const banner = document.getElementById('notif-banner');
+  if (!('Notification' in window)) { banner.classList.remove('visible'); return; }
+  if (Notification.permission === 'granted' || localStorage.getItem('mb_notif_dismissed')) {
+    banner.classList.remove('visible');
+  } else {
+    banner.classList.add('visible');
+  }
+}
+
+function dismissNotifBanner() {
+  localStorage.setItem('mb_notif_dismissed', '1');
+  document.getElementById('notif-banner').classList.remove('visible');
+}
+
+function requestNotifPermission() {
+  if (!('Notification' in window)) { toast('Notifications non supportées'); return; }
+  Notification.requestPermission().then(result => {
+    if (result === 'granted') {
+      dismissNotifBanner();
+      toast('Notifications activées ✓');
+      updateNotifToggle();
+    } else {
+      toast('Permission refusée');
+    }
+  });
+}
+
+function updateNotifToggle() {
+  const btn = document.getElementById('notif-toggle-btn');
+  const row = document.getElementById('notif-time-row');
+  if (!btn) return;
+  const enabled = Notification.permission === 'granted' && localStorage.getItem('mb_notif_enabled');
+  btn.textContent = enabled ? 'Désactiver' : 'Activer';
+  if (row) row.style.display = enabled ? 'flex' : 'none';
+}
+
+function toggleNotifSetting() {
+  if (!('Notification' in window)) { toast('Notifications non supportées'); return; }
+  if (Notification.permission !== 'granted') { requestNotifPermission(); return; }
+  const enabled = localStorage.getItem('mb_notif_enabled');
+  if (enabled) {
+    localStorage.removeItem('mb_notif_enabled');
+    toast('Notifications désactivées');
+  } else {
+    localStorage.setItem('mb_notif_enabled', '1');
+    toast('Notifications activées ✓');
+  }
+  updateNotifToggle();
+}
+
+function saveNotifTime() {
+  const t = document.getElementById('notif-time').value;
+  localStorage.setItem('mb_notif_time', t);
+  toast(`Brief programmé à ${t}`);
+}
+
+function scheduleNotifCheck() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  if (!localStorage.getItem('mb_notif_enabled')) return;
+  const now = new Date();
+  const targetTime = localStorage.getItem('mb_notif_time') || '07:30';
+  const [hh, mm] = targetTime.split(':').map(Number);
+  const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
+  if (now > target) target.setDate(target.getDate() + 1);
+  const delay = target - now;
+  setTimeout(() => {
+    new Notification('Morning Brief ☀️', {
+      body: 'Votre brief du jour est prêt. Appuyez pour générer.',
+      icon: 'icon-192.png',
+    });
+    scheduleNotifCheck();
+  }, delay);
 }
 
 // ─── Thèmes ───────────────────────────────────────────────
@@ -1018,6 +1179,9 @@ function renderProfile() {
   document.getElementById('profil-goal').value = p.goal || '';
   document.getElementById('profil-style').value = p.style || 'concis et actionnable';
   document.getElementById('profil-apikey').value = p.apikey || '';
+  const t = document.getElementById('notif-time');
+  if (t) t.value = localStorage.getItem('mb_notif_time') || '07:30';
+  updateNotifToggle();
   renderProfilePills();
 }
 
@@ -1037,14 +1201,103 @@ function saveProfile() {
     apikey: key || profiles[idx].apikey,
   };
   store.set('mb_profiles', profiles);
-  renderProfileSwitcher();
-  renderProfilePills();
-  toast('Profil enregistré ✓');
+  renderProfileSwitcher(); renderProfilePills(); toast('Profil enregistré ✓');
 }
 
 function toggleApiKeyVisibility() {
   const i = document.getElementById('profil-apikey');
   i.type = i.type === 'password' ? 'text' : 'password';
+}
+
+// ─── Favoris ──────────────────────────────────────────────
+function renderFavorites() {
+  const favs = getFavorites();
+  const container = document.getElementById('favoris-container');
+  const subtitle = document.getElementById('fav-subtitle');
+  if (subtitle) subtitle.textContent = `${favs.length} article${favs.length > 1 ? 's' : ''} sauvegardé${favs.length > 1 ? 's' : ''}`;
+  if (!favs.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⭐</div><h3>Aucun favori</h3><p>Appuyez sur ☆ dans un article pour le sauvegarder ici.</p></div>`;
+    return;
+  }
+  container.innerHTML = '<div class="articles-list">' + favs.map((a, i) => `
+    <div class="article-card" style="cursor:pointer;" onclick="openFavReader(${i})">
+      <div class="article-meta">
+        <span class="article-tag">${esc(a.tag)}</span>
+        <span class="article-time">⏱ ${esc(a.lecture)}</span>
+      </div>
+      <div class="article-title">${esc(a.titre)}</div>
+      <div class="article-body">${esc(a.corps)}</div>
+      <div class="article-insight">${esc(a.insight)}</div>
+      <div class="article-actions" onclick="event.stopPropagation()">
+        <button class="btn-icon fav-active" onclick="removeFav(${i})" title="Retirer">⭐</button>
+        <button class="btn-icon" onclick="shareArticle(getFavorites()[${i}])" title="Partager">↗</button>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+function removeFav(i) {
+  const favs = getFavorites();
+  const a = favs[i];
+  favs.splice(i, 1);
+  store.set('mb_favorites', favs);
+  renderFavorites();
+  refreshFavButtons(a.titre);
+  toast('Retiré des favoris');
+}
+
+function openFavReader(i) {
+  const a = getFavorites()[i];
+  if (!a) return;
+  _lastArticles = getFavorites();
+  _readerIdx = i;
+  openReader(i);
+}
+
+// ─── Stats ────────────────────────────────────────────────
+function renderStats() {
+  const history = getHistory();
+  const container = document.getElementById('stats-container');
+  if (!history.length) { container.innerHTML = ''; return; }
+
+  const totalBriefs = history.length;
+  const totalArticles = history.reduce((s, h) => s + h.articles.length, 0);
+  const favCount = getFavorites().length;
+  const streak = calcStreak(history);
+
+  const tagCount = {};
+  history.forEach(h => h.articles.forEach(a => { tagCount[a.tag] = (tagCount[a.tag] || 0) + 1; }));
+  const topTags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const maxCount = topTags[0]?.[1] || 1;
+
+  container.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value">${totalBriefs}</div><div class="stat-label">Briefs lus</div></div>
+      <div class="stat-card"><div class="stat-value">${totalArticles}</div><div class="stat-label">Articles</div></div>
+      <div class="stat-card"><div class="stat-value">${streak}</div><div class="stat-label">Jours de suite</div></div>
+      <div class="stat-card"><div class="stat-value">${favCount}</div><div class="stat-label">Favoris</div></div>
+    </div>
+    <div class="stats-tags">
+      <h3>Thèmes les plus lus</h3>
+      ${topTags.map(([tag, count]) => `
+        <div class="stats-tag-row">
+          <span style="min-width:120px;font-size:13px;">${esc(tag)}</span>
+          <div class="stats-tag-bar-wrap"><div class="stats-tag-bar" style="width:${Math.round(count/maxCount*100)}%"></div></div>
+          <span class="stats-tag-count">${count}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+function calcStreak(history) {
+  if (!history.length) return 0;
+  const today = new Date(); today.setHours(0,0,0,0);
+  let streak = 0; let check = new Date(today);
+  for (const entry of history) {
+    const d = new Date(entry.date); d.setHours(0,0,0,0);
+    if (d.getTime() === check.getTime()) {
+      streak++; check.setDate(check.getDate() - 1);
+    } else if (d.getTime() < check.getTime()) break;
+  }
+  return streak;
 }
 
 // ─── Historique ───────────────────────────────────────────
@@ -1079,8 +1332,7 @@ function clearHistory() {
   if (!confirm('Effacer tout l\'historique de ce profil ?')) return;
   const p = getActiveProfile();
   store.set('mb_history_' + p.id, []);
-  renderHistory();
-  toast('Historique effacé');
+  renderHistory(); renderStats(); toast('Historique effacé');
 }
 
 // ─── Utils ────────────────────────────────────────────────
@@ -1090,8 +1342,7 @@ function esc(str) {
 let toastTimer;
 function toast(msg, duration = 2500) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), duration);
 }
