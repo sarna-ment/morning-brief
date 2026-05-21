@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#1a0f08" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#fdf6ec" media="(prefers-color-scheme: light)" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Morning Brief" />
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <title>Morning Brief</title>
   <style>
@@ -569,32 +570,6 @@
       margin-top: 20px; letter-spacing: 0.04em;
     }
 
-    /* ─── Setup amélioré ─────────────────────────────────── */
-    .setup-hero {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 20px; padding: 28px 24px; margin-bottom: 28px; color: #fff;
-    }
-    .setup-hero-icon { font-size: 40px; margin-bottom: 10px; }
-    .setup-hero h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
-    .setup-hero p { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,.85); }
-    .setup-props { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
-    .setup-prop {
-      display: flex; align-items: flex-start; gap: 12px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px 16px;
-    }
-    .setup-prop-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
-    .setup-prop-text h4 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
-    .setup-prop-text p { font-size: 13px; color: var(--text2); line-height: 1.5; }
-    .setup-divider {
-      display: flex; align-items: center; gap: 12px; margin: 24px 0 20px;
-      font-size: 12px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.08em; color: var(--text2);
-    }
-    .setup-divider::before, .setup-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-
     /* ─── Debug bar ─────────────────────────────────────── */
     #debug-bar {
       display: none; align-items: center; gap: 8px;
@@ -749,44 +724,11 @@
 
   <!-- ══ SETUP ══════════════════════════════════════════════ -->
   <div id="screen-setup">
-    <div class="setup-hero">
-      <div class="setup-hero-icon">☀️</div>
-      <h2>Morning Brief</h2>
-      <p>Chaque matin, 5 articles personnalisés générés par l'IA — sur vos sujets, dans votre style, en moins de 5 minutes.</p>
+    <div style="text-align:center;padding:32px 0 24px;">
+      <div style="font-size:44px;margin-bottom:10px;">☀️</div>
+      <h2 style="font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px;">Morning Brief</h2>
+      <p style="font-size:14px;color:var(--text2);">Configurez votre profil pour commencer</p>
     </div>
-
-    <div class="setup-props">
-      <div class="setup-prop">
-        <div class="setup-prop-icon">🎯</div>
-        <div class="setup-prop-text">
-          <h4>100 % personnalisé</h4>
-          <p>L'IA choisit les sujets selon votre profil, votre rôle et vos thèmes favoris parmi plus de 120 catégories.</p>
-        </div>
-      </div>
-      <div class="setup-prop">
-        <div class="setup-prop-icon">🔄</div>
-        <div class="setup-prop-text">
-          <h4>Jamais deux fois le même sujet</h4>
-          <p>Le système mémorise vos briefs passés pour toujours vous apporter quelque chose de nouveau.</p>
-        </div>
-      </div>
-      <div class="setup-prop">
-        <div class="setup-prop-icon">🎙️</div>
-        <div class="setup-prop-text">
-          <h4>Mode Podcast 5 minutes</h4>
-          <p>Écoutez votre brief à voix haute pendant votre trajet ou votre routine matinale.</p>
-        </div>
-      </div>
-      <div class="setup-prop">
-        <div class="setup-prop-icon">🔒</div>
-        <div class="setup-prop-text">
-          <h4>Privé par conception</h4>
-          <p>Tout est stocké sur votre appareil. Aucun compte, aucun serveur, aucune publicité.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="setup-divider">Créer mon profil</div>
 
     <div class="form-group">
       <label>Votre prénom</label>
@@ -2146,21 +2088,33 @@ async function saveProfile() {
   if (idx === -1) return;
   const key = document.getElementById('profil-apikey').value.trim();
   if (key && !key.startsWith('sk-ant-')) { toast('Clé API invalide'); return; }
-  const { apikey: _drop, ...current } = _profiles[idx];
-  const updated = {
-    ...current,
-    name: document.getElementById('profil-name').value.trim() || current.name,
-    role: document.getElementById('profil-role').value.trim(),
-    context: document.getElementById('profil-context').value.trim(),
-    goal: document.getElementById('profil-goal').value.trim(),
-    style: document.getElementById('profil-style').value,
-  };
-  const { error } = await sb.from('profiles').upsert({ ...updated, user_id: _sbUser.id }, { onConflict: 'id' });
-  if (error) { toast('Erreur : ' + error.message); return; }
-  const newApikey = key || _profiles[idx].apikey;
-  if (newApikey) localStorage.setItem('mb_apikey_' + updated.id, newApikey);
-  _profiles[idx] = { ...updated, apikey: newApikey };
-  renderProfileSwitcher(); renderProfilePills(); toast('Profil enregistré ✓');
+  const btn = document.querySelector('.save-bar .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
+  try {
+    const { apikey: _drop, ...current } = _profiles[idx];
+    const updated = {
+      ...current,
+      name: document.getElementById('profil-name').value.trim() || current.name,
+      role: document.getElementById('profil-role').value.trim(),
+      context: document.getElementById('profil-context').value.trim(),
+      goal: document.getElementById('profil-goal').value.trim(),
+      style: document.getElementById('profil-style').value,
+    };
+    const { error } = await sb.from('profiles').upsert({ ...updated, user_id: _sbUser.id }, { onConflict: 'id' });
+    if (error) throw error;
+    const newApikey = key || _profiles[idx].apikey;
+    if (newApikey) localStorage.setItem('mb_apikey_' + updated.id, newApikey);
+    _profiles[idx] = { ...updated, apikey: newApikey };
+    renderProfileSwitcher(); renderProfilePills(); toast('Profil enregistré ✓');
+  } catch(e) {
+    console.error('saveProfile error', e);
+    toast('Erreur : ' + (e.message || e));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Enregistrer';
+    }
+  }
 }
 
 function toggleApiKeyVisibility() {

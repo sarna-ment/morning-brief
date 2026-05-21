@@ -2,24 +2,18 @@
   "name": "Morning Brief",
   "short_name": "Morning Brief",
   "description": "Votre brief d'apprentissage quotidien personnalisé par l'IA",
-  "start_url": "/",
+  "start_url": "/morning-brief/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#1a1a2e",
-  "theme_color": "#5b6af0",
+  "background_color": "#fdf6ec",
+  "theme_color": "#ff6b35",
   "lang": "fr",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "categories": ["education", "productivity", "lifestyle"],
@@ -29,8 +23,8 @@
       "name": "Générer mon brief",
       "short_name": "Brief",
       "description": "Ouvrir et générer le brief du jour",
-      "url": "/?action=generate",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+      "url": "/morning-brief/?action=generate",
+      "icons": [{ "src": "icon.svg", "sizes": "any" }]
     }
   ]
 }
