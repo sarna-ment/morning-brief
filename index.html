@@ -344,7 +344,15 @@
       font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
       text-transform: uppercase; color: var(--text2); margin-bottom: 12px;
     }
-    .save-bar { position: sticky; bottom: calc(var(--nav-h) + var(--safe-b) + 12px); padding: 12px 0 0; }
+    .save-bar {
+      position: fixed;
+      left: 0; right: 0;
+      bottom: calc(var(--nav-h) + var(--safe-b));
+      padding: 12px 16px;
+      background: linear-gradient(to top, var(--bg) 70%, transparent);
+      z-index: 90;
+    }
+    #screen-profil { padding-bottom: calc(var(--nav-h) + var(--safe-b) + 80px); }
     .api-key-row { display: flex; align-items: center; gap: 8px; }
     .api-key-row input { flex: 1; }
     /* ─── Toast ──────────────────────────────────────────── */
@@ -536,7 +544,8 @@
       .nav-btn svg { flex-shrink: 0; }
       .screen { flex: 1; padding: 40px 52px; overflow-y: auto; max-width: 820px; }
       .articles-list { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-      .save-bar { position: static; padding: 16px 0 0; }
+      .save-bar { position: static; padding: 16px 0 0; background: none; }
+      #screen-profil { padding-bottom: 40px; }
       #toast { bottom: 24px; }
       .brief-actions { flex-wrap: wrap; }
       .stats-grid { grid-template-columns: repeat(4, 1fr); }
