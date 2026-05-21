@@ -1360,6 +1360,20 @@ window.addEventListener('load', async () => {
 async function afterAuth() {
   const el = document.getElementById('login-user-info');
   if (el && _sbUser) el.textContent = `Connecté : ${_sbUser.email}`;
+
+  // Test d'accès DB en écriture (table test_log — doit exister en Supabase)
+  try {
+    const { error: testErr } = await sb.from('test_log').insert({
+      user_id: _sbUser.id,
+      message: 'auth ' + new Date().toISOString()
+    });
+    dbg('test_log insert:', testErr ? 'ERREUR ' + testErr.message : 'OK ✓');
+    setDebugStatus(testErr ? 'error' : 'ok', testErr ? 'DB write KO: ' + testErr.message : 'DB write OK ✓');
+  } catch(e) {
+    dbg('test_log exception:', e.message);
+    setDebugStatus('error', 'DB write exception: ' + e.message);
+  }
+
   await loadAllData();
   if (!getApiKey()) {
     // Si des profils existent (retour sur nouvel appareil), pré-remplir le formulaire
@@ -1392,59 +1406,52 @@ async function setupSave() {
   const key = document.getElementById('setup-apikey').value.trim();
   if (!key.startsWith('sk-ant-')) { toast('Clé API invalide — doit commencer par sk-ant-'); return; }
   const btn = document.querySelector('#screen-setup .btn-primary');
-  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
-  try {
-    const nameVal = document.getElementById('setup-name').value.trim();
-    const roleVal = document.getElementById('setup-role').value.trim();
-    const ctxVal  = document.getElementById('setup-context').value.trim();
-    const goalVal = document.getElementById('setup-goal').value.trim();
-
-    let activeId;
-    if (_profiles.length > 0) {
-      // Profil existant (appareil sans clé API) → mise à jour
-      const existing = getActiveProfile();
-      activeId = existing.id;
-      const { apikey: _drop, ...base } = existing;
-      const updated = {
-        ...base,
-        name:    nameVal || existing.name,
-        role:    roleVal || existing.role,
-        context: ctxVal  || existing.context,
-        goal:    goalVal || existing.goal,
-      };
-      const { error } = await sb.from('profiles').upsert({ ...updated, user_id: _sbUser.id }, { onConflict: 'id' });
-      if (error) throw error;
-      localStorage.setItem('mb_apikey_' + activeId, key);
-      _profiles = _profiles.map(p => p.id === activeId ? { ...updated, apikey: key } : p);
-    } else {
-      // Premier profil
-      const profile = {
-        id: genId(), name: nameVal || 'Mon profil',
-        role: roleVal, context: ctxVal, goal: goalVal,
-        style: 'concis et actionnable', themes: ALL_THEMES,
-      };
-      const { error } = await sb.from('profiles').upsert({ ...profile, user_id: _sbUser.id }, { onConflict: 'id' });
-      if (error) throw error;
-      activeId = profile.id;
-      localStorage.setItem('mb_apikey_' + activeId, key);
-      _profiles = [{ ...profile, apikey: key }];
-      _activeProfileId = activeId;
-    }
-
-    _history = []; _favorites = []; _feedback = []; _theme = 'coral';
-    await sb.from('user_settings').upsert(
-      { user_id: _sbUser.id, active_profile_id: _activeProfileId || activeId, theme: 'coral' },
-      { onConflict: 'user_id' }
-    );
-    showMainApp(); initApp();
-  } catch(e) {
-    console.error('setupSave error', e);
-    toast('Erreur : ' + (e.message || e));
-  } finally {
+  const resetBtn = () => {
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg> Créer mon brief';
     }
+  };
+  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
+
+  try {
+    if (_profiles.length > 0) {
+      // Profil déjà en base → pas d'écriture Supabase, on enregistre la clé API localement
+      const p = getActiveProfile();
+      if (!p || !p.id) throw new Error('Profil actif introuvable');
+      localStorage.setItem('mb_apikey_' + p.id, key);
+      _profiles = _profiles.map(pp => pp.id === p.id ? { ...pp, apikey: key } : pp);
+      setDebugStatus('ok', 'Clé API enregistrée localement ✓');
+    } else {
+      // Premier profil → création en Supabase
+      setDebugStatus('syncing', 'Création du profil…');
+      const profile = {
+        id: genId(),
+        name: document.getElementById('setup-name').value.trim() || 'Mon profil',
+        role: document.getElementById('setup-role').value.trim(),
+        context: document.getElementById('setup-context').value.trim(),
+        goal: document.getElementById('setup-goal').value.trim(),
+        style: 'concis et actionnable', themes: ALL_THEMES,
+      };
+      const { error: pErr } = await sb.from('profiles').insert({ ...profile, user_id: _sbUser.id });
+      if (pErr) throw pErr;
+      const { error: sErr } = await sb.from('user_settings').upsert(
+        { user_id: _sbUser.id, active_profile_id: profile.id, theme: 'coral' },
+        { onConflict: 'user_id' }
+      );
+      if (sErr) throw sErr;
+      localStorage.setItem('mb_apikey_' + profile.id, key);
+      _profiles = [{ ...profile, apikey: key }];
+      _activeProfileId = profile.id;
+      _history = []; _favorites = []; _feedback = []; _theme = 'coral';
+      setDebugStatus('ok', 'Profil créé ✓');
+    }
+    showMainApp(); initApp();
+  } catch(e) {
+    console.error('setupSave error', e);
+    setDebugStatus('error', e.message || String(e));
+    toast('Erreur : ' + (e.message || e), 5000);
+    resetBtn();
   }
 }
 
