@@ -1395,15 +1395,13 @@ window.addEventListener('load', async () => {
     if (event === 'INITIAL_SESSION') {
       if (session) {
         _sbUser = session.user;
-        await syncFromSupabase();
-        afterAuth();
+        await afterAuth();
       } else {
         showLoginScreen();
       }
     } else if (event === 'SIGNED_IN' && session && !_sbUser) {
       _sbUser = session.user;
-      await syncFromSupabase();
-      afterAuth();
+      await afterAuth();
     } else if (event === 'SIGNED_OUT') {
       _sbUser = null;
       showLoginScreen();
