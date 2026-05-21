@@ -461,6 +461,47 @@
       border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite;
     }
 
+    /* ─── Sélecteur de thème ────────────────────────────── */
+    .theme-picker { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .theme-swatch {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      cursor: pointer; border-radius: 12px; padding: 8px 12px;
+      border: 2px solid transparent; transition: all .2s; flex: 1; min-width: 80px;
+    }
+    .theme-swatch:hover { border-color: var(--border); }
+    .theme-swatch.active { border-color: var(--accent); background: var(--accent-light); }
+    .theme-swatch-dot {
+      width: 36px; height: 36px; border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+    .theme-swatch-name { font-size: 11px; font-weight: 600; color: var(--text2); text-align: center; }
+
+    /* ─── Setup amélioré ─────────────────────────────────── */
+    .setup-hero {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 20px; padding: 28px 24px; margin-bottom: 28px; color: #fff;
+    }
+    .setup-hero-icon { font-size: 40px; margin-bottom: 10px; }
+    .setup-hero h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .setup-hero p { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,.85); }
+    .setup-props { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .setup-prop {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .setup-prop-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+    .setup-prop-text h4 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .setup-prop-text p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+    .setup-divider {
+      display: flex; align-items: center; gap: 12px; margin: 24px 0 20px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text2);
+    }
+    .setup-divider::before, .setup-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
     /* ─── Desktop layout ─────────────────────────────────── */
     @media (min-width: 768px) {
       body { overflow: auto; }
@@ -499,37 +540,74 @@
 
   <!-- ══ SETUP ══════════════════════════════════════════════ -->
   <div id="screen-setup">
-    <div class="setup-logo">☀️</div>
-    <div class="setup-title">Morning Brief</div>
-    <div class="setup-desc">Votre brief personnalisé chaque matin, généré par l'IA en 5 articles sur-mesure.</div>
+    <div class="setup-hero">
+      <div class="setup-hero-icon">☀️</div>
+      <h2>Morning Brief</h2>
+      <p>Chaque matin, 5 articles personnalisés générés par l'IA — sur vos sujets, dans votre style, en moins de 5 minutes.</p>
+    </div>
+
+    <div class="setup-props">
+      <div class="setup-prop">
+        <div class="setup-prop-icon">🎯</div>
+        <div class="setup-prop-text">
+          <h4>100 % personnalisé</h4>
+          <p>L'IA choisit les sujets selon votre profil, votre rôle et vos thèmes favoris parmi plus de 120 catégories.</p>
+        </div>
+      </div>
+      <div class="setup-prop">
+        <div class="setup-prop-icon">🔄</div>
+        <div class="setup-prop-text">
+          <h4>Jamais deux fois le même sujet</h4>
+          <p>Le système mémorise vos briefs passés pour toujours vous apporter quelque chose de nouveau.</p>
+        </div>
+      </div>
+      <div class="setup-prop">
+        <div class="setup-prop-icon">🎙️</div>
+        <div class="setup-prop-text">
+          <h4>Mode Podcast 5 minutes</h4>
+          <p>Écoutez votre brief à voix haute pendant votre trajet ou votre routine matinale.</p>
+        </div>
+      </div>
+      <div class="setup-prop">
+        <div class="setup-prop-icon">🔒</div>
+        <div class="setup-prop-text">
+          <h4>Privé par conception</h4>
+          <p>Tout est stocké sur votre appareil. Aucun compte, aucun serveur, aucune publicité.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-divider">Créer mon profil</div>
+
     <div class="form-group">
       <label>Votre prénom</label>
-      <input type="text" id="setup-name" placeholder="Ex : Guillaume" />
+      <input type="text" id="setup-name" placeholder="Ex : Marie, Thomas…" />
     </div>
     <div class="form-group">
       <label>Clé API Anthropic</label>
       <input type="password" id="setup-apikey" placeholder="sk-ant-…" autocomplete="off" />
       <div class="setup-note">
-        Votre clé est stockée uniquement sur cet appareil.<br>
-        Obtenez-la sur <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+        🔑 Votre clé est stockée <strong>uniquement sur cet appareil</strong>, jamais partagée.<br>
+        Gratuite à obtenir sur <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> · ~0,01 € par brief.
       </div>
     </div>
     <div class="form-group">
-      <label>Votre rôle</label>
-      <input type="text" id="setup-role" placeholder="Ex : Manager IT, développeuse, entrepreneur…" />
+      <label>Votre rôle <span style="font-weight:400;text-transform:none;font-size:12px;">(aide l'IA à cibler les bons sujets)</span></label>
+      <input type="text" id="setup-role" placeholder="Ex : Manager IT, développeuse, entrepreneur, étudiant…" />
     </div>
     <div class="form-group">
-      <label>Contexte</label>
-      <textarea id="setup-context" placeholder="Ex : secteur d'activité, projets en cours, zones géographiques…"></textarea>
+      <label>Contexte <span style="font-weight:400;text-transform:none;font-size:12px;">optionnel</span></label>
+      <textarea id="setup-context" placeholder="Ex : secteur d'activité, projets en cours, zones géographiques qui vous intéressent…"></textarea>
     </div>
     <div class="form-group">
-      <label>Objectif d'apprentissage</label>
+      <label>Objectif d'apprentissage <span style="font-weight:400;text-transform:none;font-size:12px;">optionnel</span></label>
       <input type="text" id="setup-goal" placeholder="Ex : rester à la pointe de l'IA, développer ma culture générale…" />
     </div>
-    <button class="btn-primary" onclick="setupSave()">
+    <button class="btn-primary" onclick="setupSave()" style="margin-top:8px;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
-      Commencer
+      Créer mon brief
     </button>
+    <p style="text-align:center;font-size:12px;color:var(--text2);margin-top:16px;">Vous pourrez affiner vos thèmes et votre profil à tout moment.</p>
   </div>
 
   <!-- ══ MAIN APP ════════════════════════════════════════════ -->
@@ -578,7 +656,33 @@
           Podcast
         </button>
       </div>
-      <div id="articles-container"></div>
+      <div id="articles-container">
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;opacity:.7;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--tag-bg);color:var(--tag-text);padding:3px 8px;border-radius:6px;">Aperçu</span>
+              <span style="font-size:12px;color:var(--text2);margin-left:auto;">⏱ 2 min</span>
+            </div>
+            <div style="font-size:17px;font-weight:700;margin-bottom:8px;letter-spacing:-.02em;">Qu'est-ce qu'un Morning Brief ?</div>
+            <div style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:12px;">Chaque matin, l'IA génère 5 articles personnalisés selon votre profil et vos thèmes favoris. Fini de scroller des heures — votre veille est faite en 5 minutes, dans le style qui vous convient.</div>
+            <div style="display:flex;gap:10px;background:var(--accent-light);border-radius:10px;padding:12px;font-size:13px;line-height:1.5;">⚡ Appuyez sur <strong>Générer mon brief</strong> pour recevoir votre premier brief personnalisé.</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;opacity:.5;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--tag-bg);color:var(--tag-text);padding:3px 8px;border-radius:6px;">Thèmes</span>
+            </div>
+            <div style="font-size:17px;font-weight:700;margin-bottom:8px;letter-spacing:-.02em;">Plus de 120 sujets à explorer</div>
+            <div style="font-size:14px;color:var(--text2);line-height:1.6;">Géopolitique, IA, business, sport, culture… Configurez vos thèmes dans l'onglet <strong>Thèmes</strong> pour que chaque brief soit différent.</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;opacity:.35;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--tag-bg);color:var(--tag-text);padding:3px 8px;border-radius:6px;">Podcast</span>
+            </div>
+            <div style="font-size:17px;font-weight:700;margin-bottom:8px;letter-spacing:-.02em;">Écoutez votre brief en 5 minutes</div>
+            <div style="font-size:14px;color:var(--text2);line-height:1.6;">Après génération, activez le mode Podcast pour écouter un script audio naturel pendant votre trajet ou routine matinale.</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Favoris -->
@@ -631,6 +735,11 @@
           </select>
         </div>
       </div>
+      <div class="profil-section">
+        <h3>Thème visuel</h3>
+        <div class="theme-picker" id="theme-picker"></div>
+      </div>
+
       <div class="profil-section">
         <h3>Notifications</h3>
         <div class="notif-row">
@@ -756,6 +865,67 @@
 <div id="toast"></div>
 
 <script>
+// ─── Thèmes visuels (5 designs) ──────────────────────────
+const VISUAL_THEMES = {
+  coral: {
+    name: 'Coral Sunrise', emoji: '🌅',
+    dot: 'linear-gradient(135deg,#ff6b35,#ff3d00)',
+    light: { '--bg':'#fdf6ec','--bg2':'#faeeda','--surface':'#ffffff','--border':'#e8d5bc','--text':'#1a0f08','--text2':'#7a5c40','--accent':'#ff6b35','--accent2':'#ff3d00','--accent-light':'#fff1eb','--tag-bg':'#ffe4d4','--tag-text':'#cc3200','--shadow-sm':'0 2px 8px rgba(255,107,53,.08)','--shadow-md':'0 4px 20px rgba(255,107,53,.12)' },
+    dark:  { '--bg':'#1a0f08','--bg2':'#241508','--surface':'#2a1a0e','--border':'#3d2a1a','--text':'#f5ede4','--text2':'#a08060','--accent':'#ff7a45','--accent2':'#ff5520','--accent-light':'#2a1508','--tag-bg':'#3d1f0a','--tag-text':'#ff9060','--shadow-sm':'0 2px 8px rgba(0,0,0,.3)','--shadow-md':'0 4px 20px rgba(0,0,0,.4)' },
+  },
+  ocean: {
+    name: 'Ocean Breeze', emoji: '🌊',
+    dot: 'linear-gradient(135deg,#0077e6,#0055cc)',
+    light: { '--bg':'#f0f7ff','--bg2':'#e0f0ff','--surface':'#ffffff','--border':'#b8d8f8','--text':'#0a1a2e','--text2':'#3a6080','--accent':'#0077e6','--accent2':'#005bbf','--accent-light':'#e0f0ff','--tag-bg':'#dbeafe','--tag-text':'#1e40af','--shadow-sm':'0 2px 8px rgba(0,119,230,.08)','--shadow-md':'0 4px 20px rgba(0,119,230,.14)' },
+    dark:  { '--bg':'#081828','--bg2':'#0d2240','--surface':'#102a4c','--border':'#1a3d6e','--text':'#e0f0ff','--text2':'#6090c0','--accent':'#3399ff','--accent2':'#0077e6','--accent-light':'#0d2240','--tag-bg':'#1a3d6e','--tag-text':'#7ac0ff','--shadow-sm':'0 2px 8px rgba(0,0,0,.3)','--shadow-md':'0 4px 20px rgba(0,0,0,.4)' },
+  },
+  forest: {
+    name: 'Forest Calm', emoji: '🌿',
+    dot: 'linear-gradient(135deg,#2d7a2d,#1a5e1a)',
+    light: { '--bg':'#f2f7f2','--bg2':'#e8f2e8','--surface':'#ffffff','--border':'#c0d8c0','--text':'#0d1f0d','--text2':'#3d6b3d','--accent':'#2d7a2d','--accent2':'#1a5e1a','--accent-light':'#e8f5e8','--tag-bg':'#d4edda','--tag-text':'#145214','--shadow-sm':'0 2px 8px rgba(45,122,45,.08)','--shadow-md':'0 4px 20px rgba(45,122,45,.13)' },
+    dark:  { '--bg':'#0a1a0a','--bg2':'#112211','--surface':'#162616','--border':'#244024','--text':'#e8f5e8','--text2':'#6aab6a','--accent':'#4caf50','--accent2':'#388e3c','--accent-light':'#112211','--tag-bg':'#1e3a1e','--tag-text':'#81c784','--shadow-sm':'0 2px 8px rgba(0,0,0,.3)','--shadow-md':'0 4px 20px rgba(0,0,0,.4)' },
+  },
+  midnight: {
+    name: 'Midnight', emoji: '🌙',
+    dot: 'linear-gradient(135deg,#7c3aed,#5b21b6)',
+    light: { '--bg':'#f8f8fc','--bg2':'#f0f0f8','--surface':'#ffffff','--border':'#d0cce8','--text':'#1a1a2e','--text2':'#5a5a8a','--accent':'#7c3aed','--accent2':'#5b21b6','--accent-light':'#f3f0ff','--tag-bg':'#ede9fe','--tag-text':'#5b21b6','--shadow-sm':'0 2px 8px rgba(124,58,237,.08)','--shadow-md':'0 4px 20px rgba(124,58,237,.14)' },
+    dark:  { '--bg':'#0f0f1a','--bg2':'#16162a','--surface':'#1e1e32','--border':'#2e2e50','--text':'#e8e8f5','--text2':'#8080b0','--accent':'#a78bfa','--accent2':'#7c3aed','--accent-light':'#1e1e32','--tag-bg':'#2e2040','--tag-text':'#c4b5fd','--shadow-sm':'0 2px 8px rgba(0,0,0,.4)','--shadow-md':'0 4px 24px rgba(0,0,0,.5)' },
+  },
+  golden: {
+    name: 'Golden Hour', emoji: '✨',
+    dot: 'linear-gradient(135deg,#d97706,#b45309)',
+    light: { '--bg':'#fdf8f0','--bg2':'#f9f0e0','--surface':'#ffffff','--border':'#e8d590','--text':'#1a1000','--text2':'#7a5c10','--accent':'#d97706','--accent2':'#b45309','--accent-light':'#fffbeb','--tag-bg':'#fef3c7','--tag-text':'#92400e','--shadow-sm':'0 2px 8px rgba(217,119,6,.08)','--shadow-md':'0 4px 20px rgba(217,119,6,.14)' },
+    dark:  { '--bg':'#1a1200','--bg2':'#261c00','--surface':'#2e2200','--border':'#4a3800','--text':'#fef3c7','--text2':'#a07830','--accent':'#fbbf24','--accent2':'#d97706','--accent-light':'#261c00','--tag-bg':'#3d2c00','--tag-text':'#fde68a','--shadow-sm':'0 2px 8px rgba(0,0,0,.3)','--shadow-md':'0 4px 20px rgba(0,0,0,.4)' },
+  },
+};
+
+function applyTheme(id) {
+  const theme = VISUAL_THEMES[id] || VISUAL_THEMES.coral;
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const vars = isDark ? theme.dark : theme.light;
+  const root = document.documentElement;
+  Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  localStorage.setItem('mb_theme', id);
+  renderThemePicker();
+}
+
+function loadTheme() {
+  const id = localStorage.getItem('mb_theme') || 'coral';
+  applyTheme(id);
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyTheme(localStorage.getItem('mb_theme') || 'coral'));
+}
+
+function renderThemePicker() {
+  const current = localStorage.getItem('mb_theme') || 'coral';
+  const el = document.getElementById('theme-picker');
+  if (!el) return;
+  el.innerHTML = Object.entries(VISUAL_THEMES).map(([id, t]) => `
+    <div class="theme-swatch ${id === current ? 'active' : ''}" onclick="applyTheme('${id}')">
+      <div class="theme-swatch-dot" style="background:${t.dot}"></div>
+      <div class="theme-swatch-name">${t.emoji} ${t.name}</div>
+    </div>`).join('');
+}
+
 // ─── Thèmes (~120 tags) ───────────────────────────────────
 const THEMES_DEFAULT = {
   "🌍 Géopolitique": ["États-Unis","Chine","Russie","Union européenne","France","Espagne","Pologne","Hong Kong","Émirats arabes unis","Inde","Japon","Corée du Sud","Moyen-Orient","Afrique","Amérique latine","Turquie","Royaume-Uni","Israël & Palestine","Asean","Océanie"],
@@ -874,6 +1044,7 @@ window.addEventListener('load', () => {
 });
 
 function initApp() {
+  loadTheme();
   renderBriefScreen();
   renderThemes();
   renderProfile();
@@ -1003,7 +1174,7 @@ async function generateBrief(weekly = false) {
   btn.disabled = true;
   document.getElementById('btn-audio').style.display = 'none';
   document.getElementById('btn-podcast').style.display = 'none';
-  container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>${weekly ? 'Génération du brief hebdomadaire…' : 'L\'IA compose votre brief…'}</p></div>`;
+  container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>${weekly ? 'Génération du brief hebdomadaire…' : 'L\'IA compose votre brief personnalisé…'}</p><p style="font-size:12px;opacity:.6;">Cela prend environ 10 secondes</p></div>`;
   try {
     const prompt = weekly ? buildWeeklyPrompt(getProfile()) : buildPrompt(getProfile(), getThemes());
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1514,6 +1685,7 @@ function renderProfile() {
   if (t) t.value = localStorage.getItem('mb_notif_time') || '07:30';
   updateNotifToggle();
   renderProfilePills();
+  renderThemePicker();
 }
 
 function saveProfile() {
