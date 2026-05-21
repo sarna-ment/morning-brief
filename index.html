@@ -173,15 +173,6 @@
     .btn-icon:active { transform: scale(.9); }
     .btn-icon.fav-active { background: #fff3cd; }
 
-    /* ─── Notification banner ────────────────────────────── */
-    #notif-banner {
-      display: none; align-items: center; gap: 12px;
-      background: var(--accent-light); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px;
-    }
-    #notif-banner.visible { display: flex; }
-    #notif-banner span { flex: 1; font-size: 13px; line-height: 1.5; }
-
     /* ─── Audio bar ──────────────────────────────────────── */
     .audio-bar {
       display: flex; align-items: center; gap: 10px;
@@ -355,11 +346,6 @@
     .save-bar { position: sticky; bottom: calc(var(--nav-h) + var(--safe-b) + 12px); padding: 12px 0 0; }
     .api-key-row { display: flex; align-items: center; gap: 8px; }
     .api-key-row input { flex: 1; }
-    .notif-row { display: flex; align-items: center; justify-content: space-between; }
-    .notif-row label { text-transform: none; font-size: 14px; font-weight: 500; margin: 0; color: var(--text); }
-    .notif-time { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-    .notif-time input[type="time"] { width: auto; padding: 8px 12px; }
-
     /* ─── Toast ──────────────────────────────────────────── */
     #toast {
       position: fixed;
@@ -625,11 +611,6 @@
           <div id="profile-menu" class="profile-menu"></div>
         </div>
       </div>
-      <div id="notif-banner" class="visible">
-        <span>🔔 Recevez votre brief chaque matin à l'heure que vous choisissez.</span>
-        <button class="btn-ghost" onclick="requestNotifPermission()">Activer</button>
-        <button class="btn-ghost" onclick="dismissNotifBanner()" style="padding:6px 8px;">✕</button>
-      </div>
       <div class="brief-hero">
         <div class="brief-date" id="brief-date"></div>
         <h2 id="brief-greeting">Bonjour !</h2>
@@ -740,17 +721,6 @@
         <div class="theme-picker" id="theme-picker"></div>
       </div>
 
-      <div class="profil-section">
-        <h3>Notifications</h3>
-        <div class="notif-row">
-          <label>Brief quotidien automatique</label>
-          <button class="btn-ghost" id="notif-toggle-btn" onclick="toggleNotifSetting()">Activer</button>
-        </div>
-        <div class="notif-time" id="notif-time-row" style="display:none;">
-          <span style="font-size:14px;">Heure :</span>
-          <input type="time" id="notif-time" value="07:30" onchange="saveNotifTime()" />
-        </div>
-      </div>
       <div class="profil-section">
         <h3>Clé API</h3>
         <div class="form-group">
@@ -1051,8 +1021,6 @@ function initApp() {
   renderHistory();
   renderFavorites();
   renderProfileSwitcher();
-  checkNotifBanner();
-  scheduleNotifCheck();
 }
 
 // ─── Setup ────────────────────────────────────────────────
@@ -1566,83 +1534,6 @@ function closePodcast() {
   document.getElementById('pod-waveform').classList.remove('playing');
 }
 
-// ─── Notifications ────────────────────────────────────────
-function checkNotifBanner() {
-  const banner = document.getElementById('notif-banner');
-  if (!('Notification' in window)) { banner.classList.remove('visible'); return; }
-  if (Notification.permission === 'granted' || localStorage.getItem('mb_notif_dismissed')) {
-    banner.classList.remove('visible');
-  } else {
-    banner.classList.add('visible');
-  }
-}
-
-function dismissNotifBanner() {
-  localStorage.setItem('mb_notif_dismissed', '1');
-  document.getElementById('notif-banner').classList.remove('visible');
-}
-
-function requestNotifPermission() {
-  if (!('Notification' in window)) { toast('Notifications non supportées'); return; }
-  Notification.requestPermission().then(result => {
-    if (result === 'granted') {
-      dismissNotifBanner();
-      toast('Notifications activées ✓');
-      updateNotifToggle();
-    } else {
-      toast('Permission refusée');
-    }
-  });
-}
-
-function updateNotifToggle() {
-  const btn = document.getElementById('notif-toggle-btn');
-  const row = document.getElementById('notif-time-row');
-  if (!btn) return;
-  const enabled = Notification.permission === 'granted' && localStorage.getItem('mb_notif_enabled');
-  btn.textContent = enabled ? 'Désactiver' : 'Activer';
-  if (row) row.style.display = enabled ? 'flex' : 'none';
-}
-
-function toggleNotifSetting() {
-  if (!('Notification' in window)) { toast('Notifications non supportées'); return; }
-  if (Notification.permission !== 'granted') { requestNotifPermission(); return; }
-  const enabled = localStorage.getItem('mb_notif_enabled');
-  if (enabled) {
-    localStorage.removeItem('mb_notif_enabled');
-    toast('Notifications désactivées');
-  } else {
-    localStorage.setItem('mb_notif_enabled', '1');
-    toast('Notifications activées ✓');
-  }
-  updateNotifToggle();
-}
-
-function saveNotifTime() {
-  const t = document.getElementById('notif-time').value;
-  localStorage.setItem('mb_notif_time', t);
-  toast(`Brief programmé à ${t}`);
-}
-
-function scheduleNotifCheck() {
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
-  if (!localStorage.getItem('mb_notif_enabled')) return;
-  const now = new Date();
-  const targetTime = localStorage.getItem('mb_notif_time') || '07:30';
-  const [hh, mm] = targetTime.split(':').map(Number);
-  const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
-  if (now > target) target.setDate(target.getDate() + 1);
-  const delay = target - now;
-  setTimeout(() => {
-    new Notification('Morning Brief ☀️', {
-      body: 'Votre brief du jour est prêt. Appuyez pour générer.',
-      icon: 'icon-192.png',
-    });
-    scheduleNotifCheck();
-  }, delay);
-}
-
 // ─── Thèmes ───────────────────────────────────────────────
 function renderThemes() {
   const selected = getThemes();
@@ -1681,9 +1572,6 @@ function renderProfile() {
   document.getElementById('profil-goal').value = p.goal || '';
   document.getElementById('profil-style').value = p.style || 'concis et actionnable';
   document.getElementById('profil-apikey').value = p.apikey || '';
-  const t = document.getElementById('notif-time');
-  if (t) t.value = localStorage.getItem('mb_notif_time') || '07:30';
-  updateNotifToggle();
   renderProfilePills();
   renderThemePicker();
 }
