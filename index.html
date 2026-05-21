@@ -371,9 +371,13 @@
       position: fixed;
       left: 0; right: 0;
       bottom: calc(var(--nav-h) + var(--safe-b));
-      padding: 12px 16px;
+      padding: 10px 16px;
       background: linear-gradient(to top, var(--bg) 70%, transparent);
       z-index: 90;
+      display: flex; justify-content: flex-end;
+    }
+    .save-bar .btn-primary {
+      width: auto; padding: 11px 28px; font-size: 15px;
     }
     #screen-profil { padding-bottom: calc(var(--nav-h) + var(--safe-b) + 80px); }
     .api-key-row { display: flex; align-items: center; gap: 8px; }
