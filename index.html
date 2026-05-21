@@ -736,6 +736,11 @@
           <div class="subtitle" id="themes-subtitle">Sélectionnez vos centres d'intérêt</div>
         </div>
       </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="btn-ghost" onclick="selectAllThemes()">Tout sélectionner</button>
+        <button class="btn-ghost" onclick="deselectAllThemes()">Tout désélectionner</button>
+        <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
+      </div>
       <div id="themes-container"></div>
     </div>
 
@@ -1772,16 +1777,52 @@ function renderThemes() {
     </div>`).join('');
 }
 
-function toggleTheme(el, tag) {
-  el.classList.toggle('selected');
-  const selected = Array.from(document.querySelectorAll('.theme-tag.selected')).map(e => e.textContent.trim());
+let _themesUndo = null;
+
+function saveThemeState() {
+  _themesUndo = getThemes().slice();
+  document.getElementById('btn-undo-themes').style.display = 'inline-block';
+}
+
+function applyThemeSelection(selected) {
+  document.querySelectorAll('.theme-tag').forEach(el => {
+    el.classList.toggle('selected', selected.includes(el.textContent.trim()));
+  });
   const profiles = getProfiles();
   const idx = profiles.findIndex(p => p.id === getActiveProfileId());
   if (idx !== -1) { profiles[idx].themes = selected; store.set('mb_profiles', profiles); }
   const subtitle = document.getElementById('themes-subtitle');
   const p = getActiveProfile();
   if (subtitle) subtitle.textContent = `${selected.length} thème${selected.length > 1 ? 's' : ''} sélectionné${selected.length > 1 ? 's' : ''} · ${p.name || 'Profil'}`;
+}
+
+function toggleTheme(el, tag) {
+  saveThemeState();
+  el.classList.toggle('selected');
+  const selected = Array.from(document.querySelectorAll('.theme-tag.selected')).map(e => e.textContent.trim());
+  applyThemeSelection(selected);
   toast(el.classList.contains('selected') ? `"${tag}" ajouté` : `"${tag}" retiré`);
+}
+
+function selectAllThemes() {
+  saveThemeState();
+  applyThemeSelection(ALL_THEMES);
+  toast(`${ALL_THEMES.length} thèmes sélectionnés`);
+}
+
+function deselectAllThemes() {
+  saveThemeState();
+  applyThemeSelection([]);
+  toast('Tous les thèmes désélectionnés');
+}
+
+function undoThemes() {
+  if (_themesUndo === null) return;
+  const prev = _themesUndo;
+  _themesUndo = null;
+  applyThemeSelection(prev);
+  document.getElementById('btn-undo-themes').style.display = 'none';
+  toast('Sélection restaurée');
 }
 
 // ─── Profil ───────────────────────────────────────────────
