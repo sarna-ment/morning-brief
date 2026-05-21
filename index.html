@@ -574,6 +574,22 @@
       margin-top: 20px; letter-spacing: 0.04em;
     }
 
+    /* ─── PIN modal ─────────────────────────────────────── */
+    #screen-pin {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: var(--bg); flex-direction: column;
+      align-items: center; justify-content: center; padding: 32px 24px;
+    }
+    .pin-single {
+      text-align: center; font-size: 30px; letter-spacing: 14px; font-weight: 700;
+      width: 176px; padding: 14px 8px 14px 22px;
+      border: 2px solid var(--border); border-radius: 16px;
+      background: var(--surface); color: var(--text); outline: none;
+      transition: border-color .15s;
+    }
+    .pin-single:focus { border-color: var(--accent); }
+    .pin-single.error { border-color: #ef4444; }
+
     /* ─── Debug bar ─────────────────────────────────────── */
     #debug-bar {
       display: none; align-items: center; gap: 8px;
@@ -722,7 +738,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.3.2</div>
+      <div class="login-footer">Morning Brief v1.4.0</div>
     </div>
   </div>
 
@@ -742,9 +758,15 @@
       <label>Clé API Anthropic</label>
       <input type="password" id="setup-apikey" placeholder="sk-ant-…" autocomplete="off" />
       <div class="setup-note">
-        🔑 Votre clé est stockée <strong>uniquement sur cet appareil</strong>, jamais partagée.<br>
-        Gratuite à obtenir sur <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> · ~0,01 € par brief.
+        🔑 Gratuite sur <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> · ~0,01 € par brief.
       </div>
+    </div>
+    <div class="form-group">
+      <label>PIN de sécurité <span style="font-weight:400;text-transform:none;font-size:12px;">4 chiffres — pour retrouver votre clé sur un nouvel appareil</span></label>
+      <input type="password" id="setup-pin" class="pin-single" inputmode="numeric"
+        maxlength="4" placeholder="••••" autocomplete="new-password"
+        style="width:140px;font-size:24px;letter-spacing:10px;padding:12px 8px 12px 18px;" />
+      <div class="setup-note">🔐 Chiffre votre clé (AES-256) — récupérez-la sur n'importe quel appareil.</div>
     </div>
     <div class="form-group">
       <label>Votre rôle <span style="font-weight:400;text-transform:none;font-size:12px;">(aide l'IA à cibler les bons sujets)</span></label>
@@ -853,7 +875,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.3.2</div>
+      <div class="version-footer">Morning Brief v1.4.0</div>
     </div>
 
     <!-- Favoris -->
@@ -870,7 +892,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.3.2</div>
+      <div class="version-footer">Morning Brief v1.4.0</div>
     </div>
 
     <!-- Thèmes -->
@@ -887,7 +909,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.3.2</div>
+      <div class="version-footer">Morning Brief v1.4.0</div>
     </div>
 
     <!-- Profil -->
@@ -923,13 +945,20 @@
       </div>
 
       <div class="profil-section">
-        <h3>Clé API</h3>
+        <h3>Clé API &amp; PIN</h3>
         <div class="form-group">
-          <label>Clé Anthropic (propre à ce profil)</label>
+          <label>Clé Anthropic</label>
           <div class="api-key-row">
-            <input type="password" id="profil-apikey" placeholder="sk-ant-… (vide = clé du premier profil)" autocomplete="off" />
+            <input type="password" id="profil-apikey" placeholder="sk-ant-…" autocomplete="off" />
             <button class="btn-ghost" onclick="toggleApiKeyVisibility()">👁</button>
           </div>
+        </div>
+        <div class="form-group">
+          <label>PIN <span style="font-weight:400;font-size:12px;">nouveau PIN (laisser vide pour conserver)</span></label>
+          <input type="password" id="profil-pin" class="pin-single" inputmode="numeric"
+            maxlength="4" placeholder="••••" autocomplete="new-password"
+            style="width:140px;font-size:24px;letter-spacing:10px;padding:12px 8px 12px 18px;" />
+          <div class="setup-note" id="profil-pin-status"></div>
         </div>
       </div>
       <div class="profil-section">
@@ -957,7 +986,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.3.2</div>
+      <div class="version-footer">Morning Brief v1.4.0</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -978,7 +1007,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.3.2</div>
+      <div class="version-footer">Morning Brief v1.4.0</div>
     </div>
 
     <!-- Nav -->
@@ -1004,9 +1033,26 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.3.2</div>
+      <div class="nav-version">Morning Brief v1.4.0</div>
     </nav>
   </div>
+</div>
+
+<!-- ══ PIN MODAL ═══════════════════════════════════════════ -->
+<div id="screen-pin">
+  <div style="font-size:48px;margin-bottom:14px;">🔐</div>
+  <h2 style="font-size:21px;font-weight:700;letter-spacing:-.02em;margin-bottom:8px;">Déverrouiller</h2>
+  <p id="pin-subtitle" style="font-size:14px;color:var(--text2);margin-bottom:28px;text-align:center;max-width:280px;line-height:1.5;">
+    Entrez votre PIN pour accéder à votre brief
+  </p>
+  <input type="password" id="pin-input" class="pin-single" inputmode="numeric"
+    maxlength="4" placeholder="••••" autocomplete="current-password"
+    oninput="if(this.value.length===4) submitPin()" />
+  <div id="pin-error" style="color:#ef4444;font-size:13px;margin-top:12px;min-height:18px;text-align:center;"></div>
+  <button class="btn-ghost" onclick="pinForgot()"
+    style="margin-top:28px;font-size:13px;color:var(--text2);">
+    PIN oublié ? Ressaisir la clé manuellement
+  </button>
 </div>
 
 <!-- ══ PODCAST PLAYER ══════════════════════════════════════ -->
@@ -1101,18 +1147,78 @@ async function logout() {
   toast('Déconnecté');
 }
 
+// ── Crypto PIN (AES-256-GCM + PBKDF2) ────────────────────
+async function _pinKey(pin) {
+  const enc = new TextEncoder();
+  const km = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: enc.encode('mb-' + _sbUser.id), iterations: 100000, hash: 'SHA-256' },
+    km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+}
+async function encryptWithPin(apikey, pin) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const k = await _pinKey(pin);
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, new TextEncoder().encode(apikey));
+  const buf = new Uint8Array(12 + ct.byteLength);
+  buf.set(iv); buf.set(new Uint8Array(ct), 12);
+  return btoa(String.fromCharCode(...buf));
+}
+async function decryptWithPin(b64, pin) {
+  try {
+    const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const k = await _pinKey(pin);
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(0, 12) }, k, buf.slice(12));
+    return new TextDecoder().decode(pt);
+  } catch { return null; }
+}
+
+// ── PIN modal ────────────────────────────────────────────
+function showPinModal(subtitle) {
+  const el = document.getElementById('screen-pin');
+  el.style.display = 'flex';
+  const sub = document.getElementById('pin-subtitle');
+  if (sub && subtitle) sub.textContent = subtitle;
+  document.getElementById('pin-error').textContent = '';
+  const inp = document.getElementById('pin-input');
+  if (inp) { inp.value = ''; inp.classList.remove('error'); setTimeout(() => inp.focus(), 150); }
+}
+function hidePinModal() {
+  document.getElementById('screen-pin').style.display = 'none';
+}
+async function submitPin() {
+  const pin = document.getElementById('pin-input').value;
+  if (pin.length < 4) return;
+  const p = getActiveProfile();
+  if (!p?.encrypted_apikey) return;
+  const apikey = await decryptWithPin(p.encrypted_apikey, pin);
+  if (!apikey) {
+    document.getElementById('pin-error').textContent = 'PIN incorrect, réessayez.';
+    const inp = document.getElementById('pin-input');
+    inp.classList.add('error'); inp.value = ''; inp.focus();
+    return;
+  }
+  localStorage.setItem('mb_apikey_' + p.id, apikey);
+  _profiles = _profiles.map(pp => pp.id === p.id ? { ...pp, apikey } : pp);
+  hidePinModal(); showMainApp(); initApp();
+}
+function pinForgot() { hidePinModal(); showSetupScreen(); }
+
 // ── Écrans ────────────────────────────────────────────────
 function showLoginScreen() {
+  hidePinModal();
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('screen-setup').style.display = 'none';
   document.getElementById('main-app').style.display = 'none';
 }
 function showSetupScreen() {
+  hidePinModal();
   document.getElementById('screen-login').style.display = 'none';
   document.getElementById('screen-setup').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
 }
 function showMainApp() {
+  hidePinModal();
   document.getElementById('screen-login').style.display = 'none';
   document.getElementById('screen-setup').style.display = 'none';
   document.getElementById('main-app').style.display = 'flex';
@@ -1380,14 +1486,19 @@ async function afterAuth() {
 
   await loadAllData();
   if (!getApiKey()) {
-    // Si des profils existent (retour sur nouvel appareil), pré-remplir le formulaire
-    if (_profiles.length > 0) {
-      const p = getActiveProfile();
-      const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-      f('setup-name', p.name); f('setup-role', p.role);
-      f('setup-context', p.context); f('setup-goal', p.goal);
+    const p = getActiveProfile();
+    if (p?.encrypted_apikey) {
+      // Clé chiffrée dispo → demander le PIN
+      showPinModal(`Bonjour${p.name ? ' ' + p.name.split(' ')[0] : ''} ! Entrez votre PIN pour déverrouiller.`);
+    } else {
+      // Pas de clé chiffrée → setup (pré-remplir si profil existant)
+      if (_profiles.length > 0) {
+        const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+        f('setup-name', p.name); f('setup-role', p.role);
+        f('setup-context', p.context); f('setup-goal', p.goal);
+      }
+      showSetupScreen();
     }
-    showSetupScreen();
   } else {
     showMainApp();
     initApp();
@@ -1419,13 +1530,22 @@ async function setupSave() {
   if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
 
   try {
+    const pin = (document.getElementById('setup-pin')?.value || '').trim();
+    const encryptedKey = pin.length === 4 ? await encryptWithPin(key, pin) : null;
+
     if (_profiles.length > 0) {
-      // Profil déjà en base → pas d'écriture Supabase, on enregistre la clé API localement
+      // Profil déjà en base → clé API locale + chiffrement Supabase si PIN fourni
       const p = getActiveProfile();
       if (!p || !p.id) throw new Error('Profil actif introuvable');
       localStorage.setItem('mb_apikey_' + p.id, key);
-      _profiles = _profiles.map(pp => pp.id === p.id ? { ...pp, apikey: key } : pp);
-      setDebugStatus('ok', 'Clé API enregistrée localement ✓');
+      if (encryptedKey) {
+        await sb.from('profiles').update({ encrypted_apikey: encryptedKey }).eq('id', p.id);
+        _profiles = _profiles.map(pp => pp.id === p.id ? { ...pp, apikey: key, encrypted_apikey: encryptedKey } : pp);
+        setDebugStatus('ok', 'Clé chiffrée synchronisée ✓');
+      } else {
+        _profiles = _profiles.map(pp => pp.id === p.id ? { ...pp, apikey: key } : pp);
+        setDebugStatus('ok', 'Clé enregistrée localement ✓');
+      }
     } else {
       // Premier profil → création en Supabase
       setDebugStatus('syncing', 'Création du profil…');
@@ -1436,6 +1556,7 @@ async function setupSave() {
         context: document.getElementById('setup-context').value.trim(),
         goal: document.getElementById('setup-goal').value.trim(),
         style: 'concis et actionnable', themes: ALL_THEMES,
+        encrypted_apikey: encryptedKey,
       };
       const { error: pErr } = await sb.from('profiles').insert({ ...profile, user_id: _sbUser.id });
       if (pErr) throw pErr;
@@ -2090,6 +2211,10 @@ function renderProfile() {
   document.getElementById('profil-goal').value = p.goal || '';
   document.getElementById('profil-style').value = p.style || 'concis et actionnable';
   document.getElementById('profil-apikey').value = p.apikey || '';
+  const pinStatus = document.getElementById('profil-pin-status');
+  if (pinStatus) pinStatus.textContent = p.encrypted_apikey ? '🔐 PIN actif — clé synchronisée sur vos appareils.' : '⚠️ Aucun PIN — clé stockée uniquement sur cet appareil.';
+  const pinInp = document.getElementById('profil-pin');
+  if (pinInp) pinInp.value = '';
   renderProfilePills();
   renderThemePicker();
 }
@@ -2103,6 +2228,12 @@ async function saveProfile() {
   if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
   try {
     const { apikey: _drop, ...current } = _profiles[idx];
+    const newPin = (document.getElementById('profil-pin')?.value || '').trim();
+    const newApikey = key || _profiles[idx].apikey;
+    let encryptedKey = current.encrypted_apikey || null;
+    if (newPin.length === 4 && newApikey) {
+      encryptedKey = await encryptWithPin(newApikey, newPin);
+    }
     const updated = {
       ...current,
       name: document.getElementById('profil-name').value.trim() || current.name,
@@ -2110,13 +2241,15 @@ async function saveProfile() {
       context: document.getElementById('profil-context').value.trim(),
       goal: document.getElementById('profil-goal').value.trim(),
       style: document.getElementById('profil-style').value,
+      encrypted_apikey: encryptedKey,
     };
     const { error } = await sb.from('profiles').upsert({ ...updated, user_id: _sbUser.id }, { onConflict: 'id' });
     if (error) throw error;
-    const newApikey = key || _profiles[idx].apikey;
     if (newApikey) localStorage.setItem('mb_apikey_' + updated.id, newApikey);
     _profiles[idx] = { ...updated, apikey: newApikey };
-    renderProfileSwitcher(); renderProfilePills(); toast('Profil enregistré ✓');
+    renderProfileSwitcher(); renderProfilePills();
+    const msg = newPin.length === 4 ? 'Profil enregistré · PIN mis à jour 🔐' : 'Profil enregistré ✓';
+    toast(msg);
   } catch(e) {
     console.error('saveProfile error', e);
     toast('Erreur : ' + (e.message || e));
