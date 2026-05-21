@@ -213,8 +213,8 @@
 
     /* ─── Setup screen ───────────────────────────────────── */
     #screen-setup {
-      display: flex; flex-direction: column; justify-content: center;
-      min-height: 100dvh; padding: 40px 24px;
+      display: flex; flex-direction: column;
+      flex: 1; overflow-y: auto; padding: 40px 24px;
     }
     .setup-logo { font-size: 48px; margin-bottom: 16px; }
     .setup-title { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
@@ -820,7 +820,7 @@
   </div>
 
   <!-- ══ MAIN APP ════════════════════════════════════════════ -->
-  <div id="main-app" style="display:none; display:flex; flex-direction:column; flex:1; overflow:hidden;">
+  <div id="main-app" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
     <!-- Debug bar (visible uniquement en mode debug) -->
     <div id="debug-bar">
       <div id="debug-dot" class="debug-dot"></div>
@@ -1414,6 +1414,13 @@ async function afterAuth() {
   if (el && _sbUser) el.textContent = `Connecté : ${_sbUser.email}`;
   await loadAllData();
   if (!getApiKey()) {
+    // Si des profils existent (retour sur nouvel appareil), pré-remplir le formulaire
+    if (_profiles.length > 0) {
+      const p = getActiveProfile();
+      const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+      f('setup-name', p.name); f('setup-role', p.role);
+      f('setup-context', p.context); f('setup-goal', p.goal);
+    }
     showSetupScreen();
   } else {
     showMainApp();
@@ -1436,25 +1443,61 @@ function initApp() {
 async function setupSave() {
   const key = document.getElementById('setup-apikey').value.trim();
   if (!key.startsWith('sk-ant-')) { toast('Clé API invalide — doit commencer par sk-ant-'); return; }
-  const name = document.getElementById('setup-name').value.trim() || 'Mon profil';
-  const profile = {
-    id: genId(), name,
-    role: document.getElementById('setup-role').value.trim(),
-    context: document.getElementById('setup-context').value.trim(),
-    goal: document.getElementById('setup-goal').value.trim(),
-    style: 'concis et actionnable', themes: ALL_THEMES,
-  };
-  const { error } = await sb.from('profiles').upsert({ ...profile, user_id: _sbUser.id }, { onConflict: 'id' });
-  if (error) { toast('Erreur : ' + error.message); return; }
-  localStorage.setItem('mb_apikey_' + profile.id, key);
-  _profiles = [{ ...profile, apikey: key }];
-  _activeProfileId = profile.id;
-  _history = []; _favorites = []; _feedback = []; _theme = 'coral';
-  await sb.from('user_settings').upsert(
-    { user_id: _sbUser.id, active_profile_id: profile.id, theme: 'coral' },
-    { onConflict: 'user_id' }
-  );
-  showMainApp(); initApp();
+  const btn = document.querySelector('#screen-setup .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
+  try {
+    const nameVal = document.getElementById('setup-name').value.trim();
+    const roleVal = document.getElementById('setup-role').value.trim();
+    const ctxVal  = document.getElementById('setup-context').value.trim();
+    const goalVal = document.getElementById('setup-goal').value.trim();
+
+    let activeId;
+    if (_profiles.length > 0) {
+      // Profil existant (appareil sans clé API) → mise à jour
+      const existing = getActiveProfile();
+      activeId = existing.id;
+      const { apikey: _drop, ...base } = existing;
+      const updated = {
+        ...base,
+        name:    nameVal || existing.name,
+        role:    roleVal || existing.role,
+        context: ctxVal  || existing.context,
+        goal:    goalVal || existing.goal,
+      };
+      const { error } = await sb.from('profiles').upsert({ ...updated, user_id: _sbUser.id }, { onConflict: 'id' });
+      if (error) throw error;
+      localStorage.setItem('mb_apikey_' + activeId, key);
+      _profiles = _profiles.map(p => p.id === activeId ? { ...updated, apikey: key } : p);
+    } else {
+      // Premier profil
+      const profile = {
+        id: genId(), name: nameVal || 'Mon profil',
+        role: roleVal, context: ctxVal, goal: goalVal,
+        style: 'concis et actionnable', themes: ALL_THEMES,
+      };
+      const { error } = await sb.from('profiles').upsert({ ...profile, user_id: _sbUser.id }, { onConflict: 'id' });
+      if (error) throw error;
+      activeId = profile.id;
+      localStorage.setItem('mb_apikey_' + activeId, key);
+      _profiles = [{ ...profile, apikey: key }];
+      _activeProfileId = activeId;
+    }
+
+    _history = []; _favorites = []; _feedback = []; _theme = 'coral';
+    await sb.from('user_settings').upsert(
+      { user_id: _sbUser.id, active_profile_id: _activeProfileId || activeId, theme: 'coral' },
+      { onConflict: 'user_id' }
+    );
+    showMainApp(); initApp();
+  } catch(e) {
+    console.error('setupSave error', e);
+    toast('Erreur : ' + (e.message || e));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg> Créer mon brief';
+    }
+  }
 }
 
 // ─── Profile switcher ─────────────────────────────────────
@@ -2039,10 +2082,11 @@ function applyThemeSelection(selected) {
   const idx = profiles.findIndex(p => p.id === getActiveProfileId());
   if (idx !== -1) {
     _profiles[idx].themes = selected;
-    if (_sbUser) sb.from('profiles').upsert(
-      { ..._profiles[idx], user_id: _sbUser.id },
-      { onConflict: 'id' }
-    ).then(({ error }) => { if (error) dbg('themes save error', error); });
+    if (_sbUser) {
+      const { apikey: _a, ...pd } = _profiles[idx];
+      sb.from('profiles').upsert({ ...pd, user_id: _sbUser.id }, { onConflict: 'id' })
+        .then(({ error }) => { if (error) dbg('themes save error', error); });
+    }
   }
   const subtitle = document.getElementById('themes-subtitle');
   const p = getActiveProfile();
