@@ -86,6 +86,11 @@
       letter-spacing: 0.04em;
       margin-top: auto;
     }
+    .version-footer {
+      text-align: center; padding: 20px 0 4px;
+      font-size: 11px; color: var(--border);
+      letter-spacing: 0.04em;
+    }
 
     /* ─── Header ─────────────────────────────────────────── */
     .screen-header {
@@ -719,7 +724,7 @@
           Podcast
         </button>
       </div>
-      <div id="articles-container">
+      <div id="articles-container" style="padding-bottom:4px;">
         <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;opacity:.7;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -746,6 +751,7 @@
           </div>
         </div>
       </div>
+      <div class="version-footer">Morning Brief v1.2.0</div>
     </div>
 
     <!-- Favoris -->
@@ -758,6 +764,7 @@
         <button class="btn-ghost" onclick="clearFavorites()" style="color:#e05;">Effacer</button>
       </div>
       <div id="favoris-container"></div>
+      <div class="version-footer">Morning Brief v1.2.0</div>
     </div>
 
     <!-- Thèmes -->
@@ -774,6 +781,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
+      <div class="version-footer">Morning Brief v1.2.0</div>
     </div>
 
     <!-- Profil -->
@@ -829,9 +837,7 @@
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:8px;" id="login-user-info"></div>
       </div>
-      <div style="text-align:center;padding:8px 0 4px;font-size:11px;color:var(--border);letter-spacing:0.04em;">
-        Morning Brief v1.1.0
-      </div>
+      <div class="version-footer">Morning Brief v1.2.0</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -852,6 +858,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
+      <div class="version-footer">Morning Brief v1.2.0</div>
     </div>
 
     <!-- Nav -->
@@ -877,7 +884,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.1.0</div>
+      <div class="nav-version">Morning Brief v1.2.0</div>
     </nav>
   </div>
 </div>
@@ -996,19 +1003,33 @@ async function syncFromSupabase() {
   if (!_sbUser) return;
   try {
     // Profils
-    const { data: profiles } = await sb.from('profiles').select('*').order('created_at');
+    const { data: profiles, error: profErr } = await sb.from('profiles').select('*').order('created_at');
+    if (profErr) console.warn('profiles fetch error', profErr);
+
+    const localProfiles = store.get('mb_profiles') || [];
+
     if (profiles?.length) {
-      const local = store.get('mb_profiles') || [];
+      // Supabase a des profils → merge avec les clés API locales
       const merged = profiles.map(p => {
-        const lp = local.find(x => x.id === p.id);
+        const lp = localProfiles.find(x => x.id === p.id);
         return { ...p, apikey: lp?.apikey || '' };
       });
       store.set('mb_profiles', merged);
+    } else if (localProfiles.length) {
+      // Supabase vide mais localStorage a des profils → on les pousse
+      for (const p of localProfiles) {
+        const { apikey, ...data } = p;
+        const { error } = await sb.from('profiles').upsert({ ...data, user_id: _sbUser.id }, { onConflict: 'id' });
+        if (error) console.warn('push profile error', error);
+      }
+      toast('Profils synchronisés avec Supabase ✓', 3000);
     }
+
     // Settings
     const { data: settings } = await sb.from('user_settings').select('*').eq('user_id', _sbUser.id).maybeSingle();
     if (settings?.active_profile_id) setActiveProfileId(settings.active_profile_id);
     if (settings?.theme) localStorage.setItem('mb_theme', settings.theme);
+
     // Historique
     const profs = getProfiles();
     for (const p of profs) {
@@ -1016,6 +1037,7 @@ async function syncFromSupabase() {
         .eq('profile_id', p.id).order('created_at', { ascending: false }).limit(30);
       if (hist?.length) store.set('mb_history_' + p.id, hist.map(h => ({ date: h.created_at, label: h.label, articles: h.articles, _sbId: h.id })));
     }
+
     // Favoris
     const ap = getActiveProfile();
     if (ap.id) {
