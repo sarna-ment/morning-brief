@@ -372,6 +372,95 @@
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    /* ─── Podcast player ────────────────────────────────── */
+    .podcast-overlay {
+      display: none; position: fixed; inset: 0; z-index: 600;
+      background: linear-gradient(160deg, #1a0a04 0%, #2d1208 50%, #1a0a04 100%);
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 32px 24px;
+    }
+    .podcast-overlay.open { display: flex; }
+    .podcast-close {
+      position: absolute; top: 20px; right: 20px;
+      background: rgba(255,255,255,.1); border: none; border-radius: 50%;
+      width: 40px; height: 40px; color: rgba(255,255,255,.7); font-size: 20px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .podcast-close:hover { background: rgba(255,255,255,.2); }
+    .podcast-icon { font-size: 56px; margin-bottom: 16px; animation: podFloat 3s ease-in-out infinite; }
+    @keyframes podFloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
+    .podcast-title { font-size: 22px; font-weight: 800; color: #fff; text-align: center; margin-bottom: 6px; letter-spacing: -0.02em; }
+    .podcast-subtitle { font-size: 14px; color: rgba(255,255,255,.55); text-align: center; margin-bottom: 32px; }
+    .podcast-article-label {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 10px; min-height: 20px; text-align: center;
+    }
+    .podcast-sentence {
+      font-size: 18px; font-weight: 500; color: rgba(255,255,255,.9);
+      text-align: center; line-height: 1.6; min-height: 80px;
+      max-width: 480px; margin-bottom: 32px;
+      transition: opacity .3s;
+    }
+    .podcast-waveform {
+      display: flex; align-items: center; gap: 4px; height: 40px; margin-bottom: 28px;
+    }
+    .podcast-waveform span {
+      display: block; width: 4px; border-radius: 2px;
+      background: var(--accent); opacity: .3;
+      animation: wave 1.2s ease-in-out infinite;
+    }
+    .podcast-waveform.playing span { opacity: 1; }
+    .podcast-waveform span:nth-child(1){height:16px;animation-delay:0s;}
+    .podcast-waveform span:nth-child(2){height:28px;animation-delay:.1s;}
+    .podcast-waveform span:nth-child(3){height:36px;animation-delay:.2s;}
+    .podcast-waveform span:nth-child(4){height:24px;animation-delay:.3s;}
+    .podcast-waveform span:nth-child(5){height:38px;animation-delay:.4s;}
+    .podcast-waveform span:nth-child(6){height:20px;animation-delay:.5s;}
+    .podcast-waveform span:nth-child(7){height:32px;animation-delay:.6s;}
+    .podcast-waveform span:nth-child(8){height:18px;animation-delay:.7s;}
+    .podcast-waveform span:nth-child(9){height:30px;animation-delay:.8s;}
+    .podcast-waveform span:nth-child(10){height:14px;animation-delay:.9s;}
+    @keyframes wave { 0%,100%{transform:scaleY(1);} 50%{transform:scaleY(.4);} }
+    .podcast-progress-wrap {
+      width: 100%; max-width: 380px; margin-bottom: 8px;
+    }
+    .podcast-progress-bar {
+      width: 100%; height: 4px; background: rgba(255,255,255,.15); border-radius: 2px; overflow: hidden;
+    }
+    .podcast-progress-fill {
+      height: 100%; background: var(--accent); border-radius: 2px;
+      transition: width .5s linear; width: 0%;
+    }
+    .podcast-timer {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: rgba(255,255,255,.4); margin-top: 6px;
+    }
+    .podcast-controls { display: flex; gap: 16px; align-items: center; margin-top: 24px; }
+    .podcast-btn {
+      width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+      transition: transform .1s, opacity .15s;
+    }
+    .podcast-btn:active { transform: scale(.92); }
+    .podcast-btn-main {
+      width: 64px; height: 64px; font-size: 26px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; box-shadow: 0 4px 20px rgba(255,107,53,.5);
+    }
+    .podcast-btn-sec { background: rgba(255,255,255,.12); color: rgba(255,255,255,.8); }
+    .podcast-speed {
+      font-size: 13px; font-weight: 700; color: rgba(255,255,255,.6);
+      background: rgba(255,255,255,.1); border: none; border-radius: 20px;
+      padding: 6px 14px; cursor: pointer;
+    }
+    .podcast-generating {
+      display: flex; flex-direction: column; align-items: center; gap: 16px; color: rgba(255,255,255,.8);
+    }
+    .podcast-spinner {
+      width: 40px; height: 40px; border: 3px solid rgba(255,255,255,.2);
+      border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite;
+    }
+
     /* ─── Desktop layout ─────────────────────────────────── */
     @media (min-width: 768px) {
       body { overflow: auto; }
@@ -483,6 +572,10 @@
         <button class="btn-secondary" id="btn-audio" onclick="readBriefAloud()" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
           Écouter
+        </button>
+        <button class="btn-secondary" id="btn-podcast" onclick="startPodcast()" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+          Podcast
         </button>
       </div>
       <div id="articles-container"></div>
@@ -608,6 +701,38 @@
         Stats
       </button>
     </nav>
+  </div>
+</div>
+
+<!-- ══ PODCAST PLAYER ══════════════════════════════════════ -->
+<div class="podcast-overlay" id="podcast-overlay">
+  <button class="podcast-close" onclick="closePodcast()">✕</button>
+  <div class="podcast-icon">🎙️</div>
+  <div class="podcast-title">Morning Brief Podcast</div>
+  <div class="podcast-subtitle" id="pod-subtitle">5 articles · 5 minutes</div>
+
+  <div id="pod-generating" class="podcast-generating" style="display:none;">
+    <div class="podcast-spinner"></div>
+    <span>Rédaction du script en cours…</span>
+  </div>
+
+  <div id="pod-player" style="display:none; width:100%; max-width:480px; display:none; flex-direction:column; align-items:center;">
+    <div class="podcast-article-label" id="pod-article-label"></div>
+    <div class="podcast-sentence" id="pod-sentence"></div>
+    <div class="podcast-waveform" id="pod-waveform">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="podcast-progress-wrap">
+      <div class="podcast-progress-bar"><div class="podcast-progress-fill" id="pod-fill"></div></div>
+      <div class="podcast-timer"><span id="pod-elapsed">0:00</span><span id="pod-total">5:00</span></div>
+    </div>
+    <div class="podcast-controls">
+      <button class="podcast-btn podcast-btn-sec" onclick="podRestart()" title="Recommencer">⏮</button>
+      <button class="podcast-btn podcast-btn-main" id="pod-playpause" onclick="podToggle()">⏸</button>
+      <button class="podcast-btn podcast-btn-sec" onclick="podSkip()" title="Article suivant">⏭</button>
+      <button class="podcast-speed" id="pod-speed-btn" onclick="cycleSpeed()">1×</button>
+    </div>
   </div>
 </div>
 
@@ -877,6 +1002,7 @@ async function generateBrief(weekly = false) {
   const container = document.getElementById('articles-container');
   btn.disabled = true;
   document.getElementById('btn-audio').style.display = 'none';
+  document.getElementById('btn-podcast').style.display = 'none';
   container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>${weekly ? 'Génération du brief hebdomadaire…' : 'L\'IA compose votre brief…'}</p></div>`;
   try {
     const prompt = weekly ? buildWeeklyPrompt(getProfile()) : buildPrompt(getProfile(), getThemes());
@@ -897,6 +1023,7 @@ async function generateBrief(weekly = false) {
     saveToHistory(articles);
     document.getElementById('brief-subtitle').textContent = `${articles.length} articles ${weekly ? 'hebdo' : 'du jour'}`;
     document.getElementById('btn-audio').style.display = 'flex';
+    document.getElementById('btn-podcast').style.display = 'flex';
   } catch (e) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Erreur</h3><p>${esc(e.message)}</p></div>`;
     toast('Erreur : ' + e.message, 4000);
@@ -1015,13 +1142,13 @@ function shareArticle(a) {
   }
 }
 
-// ─── Text-to-speech ───────────────────────────────────────
+// ─── TTS simple (mini player dans le brief) ───────────────
 let _utterance = null;
 let _speechPaused = false;
 
 function readBriefAloud() {
   if (!_lastArticles.length) { toast('Générez d\'abord un brief'); return; }
-  const text = _lastArticles.map(a => `${a.tag}. ${a.titre}. ${a.corps} ${a.insight}`).join('. Prochain article. ');
+  const text = _lastArticles.map(a => `${a.tag}. ${a.titre}. ${a.corps} ${a.insight}`).join('. Article suivant. ');
   speakText(text);
 }
 
@@ -1029,6 +1156,7 @@ function speakText(text) {
   stopReading();
   if (!window.speechSynthesis) { toast('Synthèse vocale non supportée'); return; }
   _utterance = new SpeechSynthesisUtterance(text);
+  _utterance.voice = findBestVoice();
   _utterance.lang = 'fr-FR'; _utterance.rate = 1.05;
   _utterance.onstart = () => {
     document.getElementById('audio-bar').style.display = 'flex';
@@ -1046,22 +1174,225 @@ function speakText(text) {
 function toggleAudio() {
   if (!window.speechSynthesis) return;
   if (_speechPaused) {
-    speechSynthesis.resume();
-    _speechPaused = false;
+    speechSynthesis.resume(); _speechPaused = false;
     document.getElementById('audio-btn').textContent = '⏸';
     document.getElementById('audio-label').textContent = 'Lecture en cours…';
   } else {
-    speechSynthesis.pause();
-    _speechPaused = true;
+    speechSynthesis.pause(); _speechPaused = true;
     document.getElementById('audio-btn').textContent = '▶';
     document.getElementById('audio-label').textContent = 'En pause';
   }
 }
 
 function stopReading() {
-  if (window.speechSynthesis) { speechSynthesis.cancel(); }
+  if (window.speechSynthesis) speechSynthesis.cancel();
   document.getElementById('audio-bar').style.display = 'none';
   _utterance = null; _speechPaused = false;
+}
+
+// ─── Voice selection ──────────────────────────────────────
+function findBestVoice() {
+  const voices = speechSynthesis.getVoices();
+  const priority = [
+    v => /fr/i.test(v.lang) && /premium|enhanced|neural|thomas|amelie|marie|pierre|nicolas/i.test(v.name),
+    v => /fr/i.test(v.lang) && !v.localService === false,
+    v => /fr/i.test(v.lang),
+  ];
+  for (const test of priority) {
+    const match = voices.find(test);
+    if (match) return match;
+  }
+  return null;
+}
+
+// ─── Podcast ──────────────────────────────────────────────
+let _podScript = [];       // [{label, text}] — sections du script
+let _podIdx = 0;           // section en cours
+let _podPaused = false;
+let _podStartTime = null;
+let _podElapsedBefore = 0; // secondes avant la dernière pause
+let _podTimer = null;
+let _podSpeed = 1;
+const POD_DURATION = 300;  // 5 min en secondes
+
+async function startPodcast() {
+  if (!_lastArticles.length) { toast('Générez d\'abord un brief'); return; }
+  stopReading();
+  document.getElementById('podcast-overlay').classList.add('open');
+  document.getElementById('pod-generating').style.display = 'flex';
+  document.getElementById('pod-player').style.display = 'none';
+
+  try {
+    const script = await fetchPodcastScript(_lastArticles);
+    _podScript = script;
+    _podIdx = 0; _podPaused = false; _podElapsedBefore = 0;
+    _podStartTime = Date.now();
+    document.getElementById('pod-generating').style.display = 'none';
+    document.getElementById('pod-player').style.display = 'flex';
+    startPodTimer();
+    podPlayFrom(0);
+  } catch(e) {
+    document.getElementById('pod-generating').style.display = 'none';
+    toast('Erreur script : ' + e.message, 4000);
+    closePodcast();
+  }
+}
+
+async function fetchPodcastScript(articles) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('Clé API manquante');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json', 'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6', max_tokens: 1800,
+      messages: [{ role: 'user', content: buildPodcastPrompt(articles) }]
+    })
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+  const data = await res.json();
+  return parsePodcastScript(data.content[0].text);
+}
+
+function buildPodcastPrompt(articles) {
+  const p = getActiveProfile();
+  const prenom = p.name ? p.name.split(' ')[0] : 'vous';
+  const now = new Date();
+  const dateStr = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+
+  return `Tu es l'animateur d'un podcast matinal en français, voix chaleureuse et dynamique. Rédige le script audio du Morning Brief pour ${prenom}, ${dateStr}.
+
+CONTRAINTE ABSOLUE : le script lu à 130 mots/minute doit durer EXACTEMENT 5 minutes → 650 mots maximum au total.
+
+ARTICLES À TRAITER :
+${articles.map((a, i) => `${i+1}. [${a.tag}] ${a.titre} — ${a.corps} — Insight : ${a.insight}`).join('\n')}
+
+STRUCTURE IMPOSÉE — réponds avec ce JSON exact :
+[
+  {"label":"INTRO","text":"Texte de l'intro (40-50 mots). Bonjour ${prenom} ! Voici ton Morning Brief du ${dateStr}. Cinq sujets, cinq minutes. C'est parti."},
+  {"label":"${articles[0]?.tag || 'ARTICLE 1'}","text":"Phrase d'accroche naturelle. Contenu de l'article reformulé pour l'oral, phrases courtes. Insight intégré naturellement. (100-110 mots)"},
+  {"label":"${articles[1]?.tag || 'ARTICLE 2'}","text":"Transition fluide depuis le sujet précédent. Contenu reformulé. (100-110 mots)"},
+  {"label":"${articles[2]?.tag || 'ARTICLE 3'}","text":"Transition. Contenu. (100-110 mots)"},
+  {"label":"${articles[3]?.tag || 'ARTICLE 4'}","text":"Transition. Contenu. (100-110 mots)"},
+  {"label":"${articles[4]?.tag || 'ARTICLE 5'}","text":"Transition. Contenu. (100-110 mots)"},
+  {"label":"OUTRO","text":"Outro dynamique 30-40 mots. Bonne journée ${prenom} !"}
+]
+
+RÈGLES ORALES : phrases courtes, pas de listes, pas de chiffres complexes, transitions naturelles entre les sujets (\"Sur un autre registre…\", \"En lien avec ça…\", \"Changement de cap…\"). Aucun mot entre crochets ou parenthèses.
+
+Réponds UNIQUEMENT avec le JSON valide.`;
+}
+
+function parsePodcastScript(raw) {
+  try {
+    const m = raw.match(/\[[\s\S]*\]/);
+    return m ? JSON.parse(m[0]) : [];
+  } catch { return []; }
+}
+
+function podPlayFrom(idx) {
+  if (idx >= _podScript.length) { podEnd(); return; }
+  _podIdx = idx;
+  const section = _podScript[idx];
+  document.getElementById('pod-article-label').textContent = section.label;
+  document.getElementById('pod-sentence').style.opacity = '0';
+  setTimeout(() => {
+    document.getElementById('pod-sentence').textContent = section.text;
+    document.getElementById('pod-sentence').style.opacity = '1';
+  }, 150);
+
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(section.text);
+  utt.voice = findBestVoice();
+  utt.lang = 'fr-FR';
+  utt.rate = _podSpeed;
+  utt.onend = () => { if (!_podPaused) podPlayFrom(idx + 1); };
+  utt.onerror = () => {};
+  _utterance = utt;
+  speechSynthesis.speak(utt);
+  document.getElementById('pod-waveform').classList.add('playing');
+  document.getElementById('pod-playpause').textContent = '⏸';
+}
+
+function podToggle() {
+  if (_podPaused) {
+    _podPaused = false;
+    _podStartTime = Date.now();
+    speechSynthesis.resume();
+    document.getElementById('pod-waveform').classList.add('playing');
+    document.getElementById('pod-playpause').textContent = '⏸';
+    startPodTimer();
+  } else {
+    _podPaused = true;
+    _podElapsedBefore += (Date.now() - _podStartTime) / 1000;
+    speechSynthesis.pause();
+    document.getElementById('pod-waveform').classList.remove('playing');
+    document.getElementById('pod-playpause').textContent = '▶';
+    clearInterval(_podTimer);
+  }
+}
+
+function podSkip() {
+  podPlayFrom(_podIdx + 1);
+}
+
+function podRestart() {
+  _podElapsedBefore = 0;
+  _podStartTime = Date.now();
+  _podPaused = false;
+  podPlayFrom(0);
+}
+
+function podEnd() {
+  speechSynthesis.cancel();
+  document.getElementById('pod-waveform').classList.remove('playing');
+  document.getElementById('pod-playpause').textContent = '▶';
+  document.getElementById('pod-article-label').textContent = 'Terminé !';
+  document.getElementById('pod-sentence').textContent = 'Bonne journée ! 🌅';
+  document.getElementById('pod-fill').style.width = '100%';
+  clearInterval(_podTimer);
+}
+
+function startPodTimer() {
+  clearInterval(_podTimer);
+  _podTimer = setInterval(() => {
+    const elapsed = _podElapsedBefore + (Date.now() - _podStartTime) / 1000;
+    const pct = Math.min(elapsed / POD_DURATION * 100, 100);
+    document.getElementById('pod-fill').style.width = pct + '%';
+    document.getElementById('pod-elapsed').textContent = fmtTime(Math.floor(elapsed));
+    document.getElementById('pod-total').textContent = fmtTime(POD_DURATION);
+    if (elapsed >= POD_DURATION) clearInterval(_podTimer);
+  }, 500);
+}
+
+function fmtTime(s) {
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+
+function cycleSpeed() {
+  const speeds = [1, 1.2, 1.5, 0.85];
+  const labels = ['1×', '1.2×', '1.5×', '0.85×'];
+  const i = speeds.indexOf(_podSpeed);
+  _podSpeed = speeds[(i + 1) % speeds.length];
+  document.getElementById('pod-speed-btn').textContent = labels[(i + 1) % labels.length];
+  if (_utterance && !_podPaused) {
+    const idx = _podIdx;
+    speechSynthesis.cancel();
+    podPlayFrom(idx);
+  }
+}
+
+function closePodcast() {
+  speechSynthesis.cancel();
+  clearInterval(_podTimer);
+  _podPaused = false; _podElapsedBefore = 0;
+  document.getElementById('podcast-overlay').classList.remove('open');
+  document.getElementById('pod-generating').style.display = 'none';
+  document.getElementById('pod-player').style.display = 'none';
+  document.getElementById('pod-waveform').classList.remove('playing');
 }
 
 // ─── Notifications ────────────────────────────────────────
