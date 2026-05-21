@@ -105,9 +105,19 @@
       width: 38px; height: 38px; border-radius: 50%;
       background: var(--accent); color: #fff; font-size: 15px; font-weight: 700;
       border: none; cursor: pointer; display: flex; align-items: center;
-      justify-content: center; transition: opacity .15s;
+      justify-content: center; transition: opacity .15s; overflow: hidden; padding: 0;
     }
+    .profile-avatar-btn img { width: 38px; height: 38px; object-fit: cover; display: block; }
     .profile-avatar-btn:active { opacity: .7; }
+    .profile-menu-user {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .profile-menu-user img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .profile-menu-user-info { display: flex; flex-direction: column; min-width: 0; }
+    .profile-menu-user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .profile-menu-user-email { font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .profile-menu {
       display: none; position: absolute; top: 46px; right: 0;
       background: var(--surface); border: 1px solid var(--border);
@@ -497,8 +507,44 @@
 
     /* ─── Login screen ──────────────────────────────────── */
     #screen-login {
-      display: none; flex-direction: column; justify-content: center;
-      min-height: 100dvh; padding: 40px 24px; max-width: 420px; margin: 0 auto;
+      display: none; align-items: center; justify-content: center;
+      min-height: 100dvh; padding: 24px;
+      position: relative; overflow: hidden;
+    }
+    .login-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background: linear-gradient(155deg, #ffb347 0%, #ff6b35 45%, #c0280a 100%);
+    }
+    .login-bg::before {
+      content: ''; position: absolute;
+      width: 480px; height: 480px; border-radius: 50%;
+      background: rgba(255,255,255,.08);
+      top: -160px; right: -120px;
+    }
+    .login-bg::after {
+      content: ''; position: absolute;
+      width: 320px; height: 320px; border-radius: 50%;
+      background: rgba(255,255,255,.05);
+      bottom: -100px; left: -80px;
+    }
+    .login-card {
+      position: relative; z-index: 1;
+      background: rgba(253,246,236,.94);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-radius: 24px; padding: 36px 28px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.22);
+    }
+    @media (prefers-color-scheme: dark) {
+      .login-card { background: rgba(26,15,8,.9); }
+    }
+    .login-brand {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    }
+    .login-brand-sun { font-size: 34px; line-height: 1; }
+    .login-brand-name { font-size: 26px; font-weight: 800; letter-spacing: -0.04em; color: var(--text); }
+    .login-tagline {
+      font-size: 14px; color: var(--text2); margin-bottom: 28px; line-height: 1.55;
     }
     .login-sent {
       display: none; align-items: center; gap: 12px; flex-direction: column;
@@ -514,7 +560,14 @@
       content: ''; position: absolute; top: 50%; left: 0; right: 0;
       height: 1px; background: var(--border);
     }
-    .login-divider span { background: var(--bg); padding: 0 12px; position: relative; }
+    .login-divider span { background: rgba(253,246,236,.94); padding: 0 12px; position: relative; }
+    @media (prefers-color-scheme: dark) {
+      .login-divider span { background: rgba(26,15,8,.9); }
+    }
+    .login-footer {
+      text-align: center; font-size: 11px; color: var(--border);
+      margin-top: 20px; letter-spacing: 0.04em;
+    }
 
     /* ─── Setup amélioré ─────────────────────────────────── */
     .setup-hero {
@@ -582,32 +635,39 @@
 
   <!-- ══ LOGIN ══════════════════════════════════════════════ -->
   <div id="screen-login">
-    <div class="setup-logo">☀️</div>
-    <div class="setup-title">Morning Brief</div>
-    <div class="setup-desc">Connectez-vous pour synchroniser vos briefs sur tous vos appareils.</div>
-
-    <button class="btn-google" onclick="loginWithGoogle()">
-      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Continuer avec Google
-    </button>
-
-    <div class="login-divider"><span>ou</span></div>
-
-    <div id="login-sent" class="login-sent">
-      <div class="sent-icon">✉️</div>
-      <strong>Lien envoyé !</strong>
-      <span>Vérifiez votre boîte mail et cliquez sur le lien pour vous connecter.</span>
-    </div>
-
-    <div id="login-form">
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="login-email" placeholder="vous@example.com" autocomplete="email"
-          onkeydown="if(event.key==='Enter') sendMagicLink()" />
+    <div class="login-bg"></div>
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="login-brand-sun">☀️</span>
+        <span class="login-brand-name">Morning Brief</span>
       </div>
-      <button class="btn-secondary" id="login-btn" onclick="sendMagicLink()" style="width:100%;">
-        Recevoir un lien par email
+      <div class="login-tagline">5 articles sur-mesure générés par l'IA — chaque matin, rien que pour vous.</div>
+
+      <button class="btn-google" onclick="loginWithGoogle()">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continuer avec Google
       </button>
+
+      <div class="login-divider"><span>ou par email</span></div>
+
+      <div id="login-sent" class="login-sent">
+        <div class="sent-icon">✉️</div>
+        <strong>Lien envoyé !</strong>
+        <span>Vérifiez votre boîte mail et cliquez sur le lien pour vous connecter.</span>
+      </div>
+
+      <div id="login-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="vous@example.com" autocomplete="email"
+            onkeydown="if(event.key==='Enter') sendMagicLink()" />
+        </div>
+        <button class="btn-secondary" id="login-btn" onclick="sendMagicLink()" style="width:100%;">
+          Recevoir un lien de connexion
+        </button>
+      </div>
+
+      <div class="login-footer">Morning Brief v1.2.0</div>
     </div>
   </div>
 
@@ -951,7 +1011,7 @@ let _sbUser = null;
 async function loginWithGoogle() {
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo: window.location.origin + window.location.pathname }
   });
   if (error) toast('Erreur Google : ' + error.message, 4000);
 }
@@ -1272,22 +1332,24 @@ function migrateIfNeeded() {
 window.addEventListener('load', async () => {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-  // Vérifier session Supabase
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    _sbUser = session.user;
-    await syncFromSupabase();
-    afterAuth();
-  } else {
-    showLoginScreen();
-  }
-
-  // Écouter les changements d'auth (retour du magic link)
+  // onAuthStateChange doit être enregistré EN PREMIER pour ne pas manquer
+  // l'événement INITIAL_SESSION qui traite le hash OAuth (#access_token=…)
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session && !_sbUser) {
+    if (event === 'INITIAL_SESSION') {
+      if (session) {
+        _sbUser = session.user;
+        await syncFromSupabase();
+        afterAuth();
+      } else {
+        showLoginScreen();
+      }
+    } else if (event === 'SIGNED_IN' && session && !_sbUser) {
       _sbUser = session.user;
       await syncFromSupabase();
       afterAuth();
+    } else if (event === 'SIGNED_OUT') {
+      _sbUser = null;
+      showLoginScreen();
     }
   });
 });
@@ -1337,7 +1399,13 @@ function setupSave() {
 function renderProfileSwitcher() {
   const p = getActiveProfile();
   const btn = document.getElementById('profile-avatar-btn');
-  if (btn) btn.textContent = p.name ? p.name[0].toUpperCase() : '?';
+  if (!btn) return;
+  const avatarUrl = _sbUser?.user_metadata?.avatar_url;
+  if (avatarUrl) {
+    btn.innerHTML = `<img src="${avatarUrl}" alt="${esc(p.name || '')}" referrerpolicy="no-referrer">`;
+  } else {
+    btn.textContent = p.name ? p.name[0].toUpperCase() : '?';
+  }
 }
 function toggleProfileMenu() {
   const menu = document.getElementById('profile-menu');
@@ -1345,7 +1413,18 @@ function toggleProfileMenu() {
   if (menu.style.display === 'block') { closeProfileMenu(); return; }
   const profiles = getProfiles();
   const activeId = getActiveProfileId();
-  menu.innerHTML = profiles.map(p => `
+  const avatarUrl = _sbUser?.user_metadata?.avatar_url;
+  const googleName = _sbUser?.user_metadata?.full_name || _sbUser?.user_metadata?.name || '';
+  const googleEmail = _sbUser?.email || '';
+  const userHeader = avatarUrl ? `
+    <div class="profile-menu-user">
+      <img src="${avatarUrl}" alt="${esc(googleName)}" referrerpolicy="no-referrer">
+      <div class="profile-menu-user-info">
+        <div class="profile-menu-user-name">${esc(googleName)}</div>
+        <div class="profile-menu-user-email">${esc(googleEmail)}</div>
+      </div>
+    </div>` : '';
+  menu.innerHTML = userHeader + profiles.map(p => `
     <div class="profile-menu-item ${p.id === activeId ? 'active' : ''}" onclick="switchProfile('${p.id}')">
       <div class="profile-menu-avatar">${p.name ? p.name[0].toUpperCase() : '?'}</div>
       <span>${esc(p.name)}</span>
