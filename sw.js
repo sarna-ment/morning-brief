@@ -1,5 +1,6 @@
-const CACHE = 'morning-brief-v1';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
+const CACHE = 'morning-brief-v2';
+const BASE = self.location.pathname.replace(/sw\.js$/, '');
+const ASSETS = [BASE, BASE + 'index.html', BASE + 'manifest.json', BASE + 'icon.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -16,8 +17,8 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // API calls : réseau uniquement, jamais caché
   if (e.request.url.includes('api.anthropic.com')) return;
+  if (e.request.url.includes('supabase.co')) return;
 
   e.respondWith(
     caches.match(e.request).then(cached => {
@@ -28,7 +29,7 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return res;
-      }).catch(() => caches.match('/index.html'));
+      }).catch(() => caches.match(BASE + 'index.html'));
     })
   );
 });
