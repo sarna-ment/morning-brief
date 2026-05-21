@@ -1172,102 +1172,50 @@ function showMainApp() {
   document.getElementById('main-app').style.display = 'flex';
 }
 
-// ── Sync Supabase → localStorage ──────────────────────────
-async function syncFromSupabase() {
+// ── Chargement Supabase → mémoire ─────────────────────────
+async function loadAllData() {
   if (!_sbUser) return;
-  setDebugStatus('syncing', 'Sync Supabase…');
-  dbg('syncFromSupabase start');
+  setDebugStatus('syncing', 'Chargement…');
+  dbg('loadAllData start');
   try {
-    // Profils
-    const { data: profiles, error: profErr } = await sb.from('profiles').select('*').order('created_at');
-    if (profErr) console.warn('profiles fetch error', profErr);
-
-    const localProfiles = store.get('mb_profiles') || [];
-
-    if (profiles?.length) {
-      // Supabase a des profils → merge avec les clés API locales
-      const merged = profiles.map(p => {
-        const lp = localProfiles.find(x => x.id === p.id);
-        return { ...p, apikey: lp?.apikey || '' };
-      });
-      store.set('mb_profiles', merged);
-    } else if (localProfiles.length) {
-      // Supabase vide mais localStorage a des profils → on les pousse
-      for (const p of localProfiles) {
-        const { apikey, ...data } = p;
-        const { error } = await sb.from('profiles').upsert({ ...data, user_id: _sbUser.id }, { onConflict: 'id' });
-        if (error) console.warn('push profile error', error);
-      }
-      toast('Profils synchronisés avec Supabase ✓', 3000);
-    }
-
-    // Settings
+    const { data: profiles, error: pErr } = await sb.from('profiles').select('*').order('created_at');
+    if (pErr) throw pErr;
+    _profiles = (profiles || []).map(p => ({
+      ...p, apikey: localStorage.getItem('mb_apikey_' + p.id) || ''
+    }));
     const { data: settings } = await sb.from('user_settings').select('*').eq('user_id', _sbUser.id).maybeSingle();
-    if (settings?.active_profile_id) setActiveProfileId(settings.active_profile_id);
-    if (settings?.theme) localStorage.setItem('mb_theme', settings.theme);
-
-    // Historique
-    const profs = getProfiles();
-    for (const p of profs) {
-      const { data: hist } = await sb.from('history').select('*')
-        .eq('profile_id', p.id).order('created_at', { ascending: false }).limit(30);
-      if (hist?.length) store.set('mb_history_' + p.id, hist.map(h => ({ date: h.created_at, label: h.label, articles: h.articles, _sbId: h.id })));
-    }
-
-    // Favoris
-    const ap = getActiveProfile();
-    if (ap.id) {
-      const { data: favs } = await sb.from('favorites').select('*')
-        .eq('profile_id', ap.id).order('saved_at', { ascending: false });
-      if (favs?.length) store.set('mb_favorites', favs.map(f => ({ ...f.article, savedAt: f.saved_at, _sbId: f.id })));
-    }
-    setDebugStatus('ok', `Sync OK · ${new Date().toLocaleTimeString('fr-FR')}`);
-    dbg('syncFromSupabase done');
+    _activeProfileId = settings?.active_profile_id || _profiles[0]?.id || '';
+    _theme = settings?.theme || 'coral';
+    await reloadHistory();
+    await reloadFavorites();
+    await reloadFeedback();
+    setDebugStatus('ok', `Chargé ✓ · ${new Date().toLocaleTimeString('fr-FR')}`);
+    dbg('loadAllData done —', _profiles.length, 'profil(s),', _history.length, 'briefs,', _favorites.length, 'favoris');
   } catch(e) {
-    console.warn('Sync error', e);
-    setDebugStatus('error', `Sync erreur: ${e.message}`);
+    console.warn('loadAllData error', e);
+    setDebugStatus('error', e.message);
   }
 }
 
-// ── Sync localStorage → Supabase ──────────────────────────
-function sbSyncProfile(profile) {
-  if (!_sbUser) return;
-  const { apikey, ...data } = profile;
-  sb.from('profiles').upsert({ ...data, user_id: _sbUser.id }, { onConflict: 'id' }).then();
-  sbSyncSettings();
+async function reloadHistory() {
+  if (!_activeProfileId) { _history = []; return; }
+  const { data } = await sb.from('history').select('*')
+    .eq('profile_id', _activeProfileId).order('created_at', { ascending: false }).limit(30);
+  _history = (data || []).map(h => ({ id: h.id, date: h.created_at, label: h.label, articles: h.articles }));
 }
-function sbSyncSettings() {
-  if (!_sbUser) return;
-  const p = getActiveProfile();
-  sb.from('user_settings').upsert({
-    user_id: _sbUser.id, active_profile_id: p.id || null,
-    theme: localStorage.getItem('mb_theme') || 'coral'
-  }, { onConflict: 'user_id' }).then();
+
+async function reloadFavorites() {
+  if (!_activeProfileId) { _favorites = []; return; }
+  const { data } = await sb.from('favorites').select('*')
+    .eq('profile_id', _activeProfileId).order('saved_at', { ascending: false });
+  _favorites = (data || []).map(f => ({ ...f.article, savedAt: f.saved_at, _sbId: f.id }));
 }
-function sbSyncHistory(entry, profileId) {
-  if (!_sbUser || !profileId) return;
-  sb.from('history').insert({ profile_id: profileId, user_id: _sbUser.id, label: entry.label, articles: entry.articles }).then();
-}
-async function sbAddFavorite(article, profileId) {
-  if (!_sbUser || !profileId) return null;
-  const { data } = await sb.from('favorites').insert({ profile_id: profileId, user_id: _sbUser.id, article }).select('id').single();
-  return data?.id;
-}
-function sbRemoveFavorite(sbId) {
-  if (!_sbUser || !sbId) return;
-  sb.from('favorites').delete().eq('id', sbId).then();
-}
-function sbDeleteProfile(profileId) {
-  if (!_sbUser || !profileId) return;
-  sb.from('profiles').delete().eq('id', profileId).then();
-}
-function sbClearHistory(profileId) {
-  if (!_sbUser || !profileId) return;
-  sb.from('history').delete().eq('profile_id', profileId).then();
-}
-function sbClearFavorites(profileId) {
-  if (!_sbUser || !profileId) return;
-  sb.from('favorites').delete().eq('profile_id', profileId).then();
+
+async function reloadFeedback() {
+  if (!_activeProfileId) { _feedback = []; return; }
+  const { data } = await sb.from('feedback').select('*')
+    .eq('profile_id', _activeProfileId).order('created_at', { ascending: false }).limit(100);
+  _feedback = data || [];
 }
 
 // ─── Thèmes visuels (5 designs) ──────────────────────────
@@ -1305,24 +1253,25 @@ const VISUAL_THEMES = {
 };
 
 function applyTheme(id) {
+  _theme = id;
   const theme = VISUAL_THEMES[id] || VISUAL_THEMES.coral;
   const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const vars = isDark ? theme.dark : theme.light;
-  const root = document.documentElement;
-  Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
-  localStorage.setItem('mb_theme', id);
-  sbSyncSettings();
+  Object.entries(vars).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+  if (_sbUser) sb.from('user_settings').upsert(
+    { user_id: _sbUser.id, active_profile_id: _activeProfileId, theme: id },
+    { onConflict: 'user_id' }
+  ).then();
   renderThemePicker();
 }
 
 function loadTheme() {
-  const id = localStorage.getItem('mb_theme') || 'coral';
-  applyTheme(id);
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyTheme(localStorage.getItem('mb_theme') || 'coral'));
+  applyTheme(_theme || 'coral');
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyTheme(_theme || 'coral'));
 }
 
 function renderThemePicker() {
-  const current = localStorage.getItem('mb_theme') || 'coral';
+  const current = _theme || 'coral';
   const el = document.getElementById('theme-picker');
   if (!el) return;
   el.innerHTML = Object.entries(VISUAL_THEMES).map(([id, t]) => `
@@ -1350,71 +1299,77 @@ const DAYS = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"]
 const MONTHS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const ALL_THEMES = Object.values(THEMES_DEFAULT).flat();
 
-// ─── Storage ──────────────────────────────────────────────
-const store = {
-  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
-  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
-};
+// ─── État en mémoire (source de vérité = Supabase) ────────
+// localStorage uniquement pour : mb_apikey_<id> et mb_debug
+let _profiles = [];
+let _activeProfileId = '';
+let _history = [];
+let _favorites = [];
+let _feedback = [];
+let _theme = 'coral';
+
 function genId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
-// ─── Profile helpers ──────────────────────────────────────
-function getProfiles() { return store.get('mb_profiles') || []; }
-function getActiveProfileId() { return localStorage.getItem('mb_active_profile_id') || ''; }
+// ─── Accesseurs ────────────────────────────────────────────
+function getProfiles() { return _profiles; }
+function getActiveProfileId() { return _activeProfileId; }
 function getActiveProfile() {
-  const profiles = getProfiles();
-  const id = getActiveProfileId();
-  return profiles.find(p => p.id === id) || profiles[0] || {};
+  return _profiles.find(p => p.id === _activeProfileId) || _profiles[0] || {};
 }
-function setActiveProfileId(id) { localStorage.setItem('mb_active_profile_id', id); }
+function setActiveProfileId(id) {
+  _activeProfileId = id;
+  if (_sbUser) sb.from('user_settings').upsert(
+    { user_id: _sbUser.id, active_profile_id: id, theme: _theme },
+    { onConflict: 'user_id' }
+  ).then();
+}
 function getProfile() { return getActiveProfile(); }
 function getThemes() { const p = getActiveProfile(); return p.themes != null ? p.themes : ALL_THEMES; }
 function getApiKey() {
   const p = getActiveProfile();
-  if (p.apikey) return p.apikey;
-  const first = getProfiles()[0];
-  return (first && first.apikey) || localStorage.getItem('mb_apikey') || '';
+  const key = localStorage.getItem('mb_apikey_' + p.id);
+  if (key) return key;
+  const first = _profiles[0];
+  return (first && localStorage.getItem('mb_apikey_' + first.id)) || '';
 }
-function getHistory() {
-  const p = getActiveProfile();
-  return store.get('mb_history_' + (p.id || 'default')) || [];
-}
-function saveToHistory(articles) {
-  const p = getActiveProfile();
-  const key = 'mb_history_' + (p.id || 'default');
-  const history = store.get(key) || [];
+function getHistory() { return _history; }
+function getFavorites() { return _favorites; }
+
+async function saveToHistory(articles) {
+  const pid = _activeProfileId;
+  if (!pid || !_sbUser) return;
   const now = new Date();
-  const entry = { date: now.toISOString(), label: `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`, articles };
-  history.unshift(entry);
-  store.set(key, history.slice(0, 30));
-  sbSyncHistory(entry, p.id);
+  const label = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+  const { data, error } = await sb.from('history').insert({
+    profile_id: pid, user_id: _sbUser.id, label, articles
+  }).select('id').single();
+  if (error) { dbg('history insert error', error); return; }
+  _history.unshift({ id: data.id, date: now.toISOString(), label, articles });
+  _history = _history.slice(0, 30);
 }
 
-// ─── Favorites ────────────────────────────────────────────
-function getFavorites() { return store.get('mb_favorites') || []; }
-function isFavorite(titre) { return getFavorites().some(a => a.titre === titre); }
-function toggleFavorite(article) {
-  let favs = getFavorites();
-  if (isFavorite(article.titre)) {
-    const fav = favs.find(a => a.titre === article.titre);
-    if (fav?._sbId) sbRemoveFavorite(fav._sbId);
-    favs = favs.filter(a => a.titre !== article.titre);
+// ─── Favoris ──────────────────────────────────────────────
+function isFavorite(titre) { return _favorites.some(a => a.titre === titre); }
+
+async function toggleFavorite(article) {
+  const existing = _favorites.find(a => a.titre === article.titre);
+  if (existing) {
+    if (existing._sbId) await sb.from('favorites').delete().eq('id', existing._sbId);
+    _favorites = _favorites.filter(a => a.titre !== article.titre);
     toast('Retiré des favoris');
   } else {
-    const newFav = { ...article, savedAt: new Date().toISOString() };
-    favs.unshift(newFav);
-    const p = getActiveProfile();
-    sbAddFavorite(article, p.id).then(sbId => {
-      if (sbId) {
-        const f2 = getFavorites(); const idx = f2.findIndex(a => a.titre === article.titre);
-        if (idx !== -1) { f2[idx]._sbId = sbId; store.set('mb_favorites', f2); }
-      }
-    });
+    const pid = _activeProfileId;
+    const { data, error } = await sb.from('favorites').insert({
+      profile_id: pid, user_id: _sbUser.id, article
+    }).select('id').single();
+    if (error) { toast('Erreur : ' + error.message); return; }
+    _favorites.unshift({ ...article, savedAt: new Date().toISOString(), _sbId: data.id });
     toast('⭐ Ajouté aux favoris');
   }
-  store.set('mb_favorites', favs);
   refreshFavButtons(article.titre);
   if (document.getElementById('screen-favoris').classList.contains('active')) renderFavorites();
 }
+
 function refreshFavButtons(titre) {
   const fav = isFavorite(titre);
   document.querySelectorAll(`.fav-btn[data-titre="${CSS.escape(titre)}"]`).forEach(btn => {
@@ -1422,31 +1377,12 @@ function refreshFavButtons(titre) {
     btn.classList.toggle('fav-active', fav);
   });
 }
-function clearFavorites() {
-  if (!confirm('Effacer tous les favoris ?')) return;
-  const p = getActiveProfile();
-  store.set('mb_favorites', []);
-  sbClearFavorites(p.id);
-  renderFavorites();
-  toast('Favoris effacés');
-}
 
-// ─── Migration ────────────────────────────────────────────
-function migrateIfNeeded() {
-  if (getProfiles().length > 0) return;
-  const oldProfile = store.get('mb_profile') || {};
-  const oldKey = localStorage.getItem('mb_apikey') || '';
-  if (!oldKey) return;
-  const profile = {
-    id: genId(), name: 'Mon profil',
-    role: oldProfile.role || '', context: oldProfile.context || '',
-    goal: oldProfile.goal || '', style: oldProfile.style || 'concis et actionnable',
-    themes: store.get('mb_themes') || ALL_THEMES, apikey: oldKey,
-  };
-  store.set('mb_profiles', [profile]);
-  setActiveProfileId(profile.id);
-  const oldHistory = store.get('mb_history') || [];
-  if (oldHistory.length) store.set('mb_history_' + profile.id, oldHistory);
+async function clearFavorites() {
+  if (!confirm('Effacer tous les favoris ?')) return;
+  await sb.from('favorites').delete().eq('profile_id', _activeProfileId);
+  _favorites = [];
+  renderFavorites(); toast('Favoris effacés');
 }
 
 // ─── Init ─────────────────────────────────────────────────
@@ -1475,10 +1411,10 @@ window.addEventListener('load', async () => {
   });
 });
 
-function afterAuth() {
+async function afterAuth() {
   const el = document.getElementById('login-user-info');
   if (el && _sbUser) el.textContent = `Connecté : ${_sbUser.email}`;
-  migrateIfNeeded();
+  await loadAllData();
   if (!getApiKey()) {
     showSetupScreen();
   } else {
@@ -1499,7 +1435,7 @@ function initApp() {
 }
 
 // ─── Setup ────────────────────────────────────────────────
-function setupSave() {
+async function setupSave() {
   const key = document.getElementById('setup-apikey').value.trim();
   if (!key.startsWith('sk-ant-')) { toast('Clé API invalide — doit commencer par sk-ant-'); return; }
   const name = document.getElementById('setup-name').value.trim() || 'Mon profil';
@@ -1508,13 +1444,19 @@ function setupSave() {
     role: document.getElementById('setup-role').value.trim(),
     context: document.getElementById('setup-context').value.trim(),
     goal: document.getElementById('setup-goal').value.trim(),
-    style: 'concis et actionnable', themes: ALL_THEMES, apikey: key,
+    style: 'concis et actionnable', themes: ALL_THEMES,
   };
-  store.set('mb_profiles', [profile]);
-  setActiveProfileId(profile.id);
-  sbSyncProfile(profile);
-  showMainApp();
-  initApp();
+  const { error } = await sb.from('profiles').upsert({ ...profile, user_id: _sbUser.id }, { onConflict: 'id' });
+  if (error) { toast('Erreur : ' + error.message); return; }
+  localStorage.setItem('mb_apikey_' + profile.id, key);
+  _profiles = [{ ...profile, apikey: key }];
+  _activeProfileId = profile.id;
+  _history = []; _favorites = []; _feedback = []; _theme = 'coral';
+  await sb.from('user_settings').upsert(
+    { user_id: _sbUser.id, active_profile_id: profile.id, theme: 'coral' },
+    { onConflict: 'user_id' }
+  );
+  showMainApp(); initApp();
 }
 
 // ─── Profile switcher ─────────────────────────────────────
@@ -1561,29 +1503,49 @@ function toggleProfileMenu() {
 }
 function closeProfileMenu() { const m = document.getElementById('profile-menu'); if (m) m.style.display = 'none'; }
 document.addEventListener('click', e => { const sw = document.querySelector('.profile-switcher'); if (sw && !sw.contains(e.target)) closeProfileMenu(); });
-function switchProfile(id) { setActiveProfileId(id); closeProfileMenu(); initApp(); toast('Profil changé'); }
-function createProfile() {
+async function switchProfile(id) {
+  _activeProfileId = id;
+  closeProfileMenu();
+  if (_sbUser) sb.from('user_settings').upsert(
+    { user_id: _sbUser.id, active_profile_id: id, theme: _theme },
+    { onConflict: 'user_id' }
+  ).then();
+  await reloadHistory(); await reloadFavorites(); await reloadFeedback();
+  initApp(); toast('Profil changé');
+}
+
+async function createProfile() {
   closeProfileMenu();
   const name = prompt('Prénom ou nom du profil :');
   if (!name || !name.trim()) return;
-  const profiles = getProfiles();
-  const profile = { id: genId(), name: name.trim(), role: '', context: '', goal: '', style: 'concis et actionnable', themes: ALL_THEMES, apikey: '' };
-  profiles.push(profile);
-  store.set('mb_profiles', profiles);
-  setActiveProfileId(profile.id);
-  sbSyncProfile(profile);
+  const profile = { id: genId(), name: name.trim(), role: '', context: '', goal: '', style: 'concis et actionnable', themes: ALL_THEMES };
+  const { error } = await sb.from('profiles').upsert({ ...profile, user_id: _sbUser.id }, { onConflict: 'id' });
+  if (error) { toast('Erreur : ' + error.message); return; }
+  _profiles.push({ ...profile, apikey: '' });
+  _activeProfileId = profile.id;
+  if (_sbUser) sb.from('user_settings').upsert(
+    { user_id: _sbUser.id, active_profile_id: profile.id, theme: _theme },
+    { onConflict: 'user_id' }
+  ).then();
+  await reloadHistory(); await reloadFavorites(); await reloadFeedback();
   initApp(); showScreen('profil');
   toast(`Profil "${profile.name}" créé — complète les informations`);
 }
-function deleteActiveProfile() {
-  const profiles = getProfiles();
-  if (profiles.length <= 1) { toast('Impossible de supprimer le seul profil'); return; }
+
+async function deleteActiveProfile() {
+  if (_profiles.length <= 1) { toast('Impossible de supprimer le seul profil'); return; }
   const p = getActiveProfile();
   if (!confirm(`Supprimer le profil "${p.name}" ?`)) return;
-  const newProfiles = profiles.filter(x => x.id !== p.id);
-  store.set('mb_profiles', newProfiles);
-  setActiveProfileId(newProfiles[0].id);
-  sbDeleteProfile(p.id);
+  const { error } = await sb.from('profiles').delete().eq('id', p.id);
+  if (error) { toast('Erreur : ' + error.message); return; }
+  localStorage.removeItem('mb_apikey_' + p.id);
+  _profiles = _profiles.filter(x => x.id !== p.id);
+  _activeProfileId = _profiles[0]?.id || '';
+  if (_sbUser) sb.from('user_settings').upsert(
+    { user_id: _sbUser.id, active_profile_id: _activeProfileId, theme: _theme },
+    { onConflict: 'user_id' }
+  ).then();
+  await reloadHistory(); await reloadFavorites(); await reloadFeedback();
   initApp(); toast('Profil supprimé');
 }
 function renderProfilePills() {
@@ -1601,8 +1563,14 @@ function renderProfilePills() {
       <span>Nouveau</span>
     </div>`;
 }
-function switchProfileInEditor(id) {
-  setActiveProfileId(id); renderProfileSwitcher(); renderProfile(); renderThemes(); renderHistory(); toast('Profil chargé');
+async function switchProfileInEditor(id) {
+  _activeProfileId = id;
+  if (_sbUser) sb.from('user_settings').upsert(
+    { user_id: _sbUser.id, active_profile_id: id, theme: _theme },
+    { onConflict: 'user_id' }
+  ).then();
+  await reloadHistory(); await reloadFavorites(); await reloadFeedback();
+  renderProfileSwitcher(); renderProfile(); renderThemes(); renderHistory(); toast('Profil chargé');
 }
 
 // ─── Navigation ───────────────────────────────────────────
@@ -2071,7 +2039,13 @@ function applyThemeSelection(selected) {
   });
   const profiles = getProfiles();
   const idx = profiles.findIndex(p => p.id === getActiveProfileId());
-  if (idx !== -1) { profiles[idx].themes = selected; store.set('mb_profiles', profiles); }
+  if (idx !== -1) {
+    _profiles[idx].themes = selected;
+    if (_sbUser) sb.from('profiles').upsert(
+      { ..._profiles[idx], user_id: _sbUser.id },
+      { onConflict: 'id' }
+    ).then(({ error }) => { if (error) dbg('themes save error', error); });
+  }
   const subtitle = document.getElementById('themes-subtitle');
   const p = getActiveProfile();
   if (subtitle) subtitle.textContent = `${selected.length} thème${selected.length > 1 ? 's' : ''} sélectionné${selected.length > 1 ? 's' : ''} · ${p.name || 'Profil'}`;
@@ -2119,23 +2093,25 @@ function renderProfile() {
   renderThemePicker();
 }
 
-function saveProfile() {
-  const profiles = getProfiles();
-  const idx = profiles.findIndex(p => p.id === getActiveProfileId());
+async function saveProfile() {
+  const idx = _profiles.findIndex(p => p.id === _activeProfileId);
   if (idx === -1) return;
   const key = document.getElementById('profil-apikey').value.trim();
   if (key && !key.startsWith('sk-ant-')) { toast('Clé API invalide'); return; }
-  profiles[idx] = {
-    ...profiles[idx],
-    name: document.getElementById('profil-name').value.trim() || profiles[idx].name,
+  const { apikey: _drop, ...current } = _profiles[idx];
+  const updated = {
+    ...current,
+    name: document.getElementById('profil-name').value.trim() || current.name,
     role: document.getElementById('profil-role').value.trim(),
     context: document.getElementById('profil-context').value.trim(),
     goal: document.getElementById('profil-goal').value.trim(),
     style: document.getElementById('profil-style').value,
-    apikey: key || profiles[idx].apikey,
   };
-  store.set('mb_profiles', profiles);
-  sbSyncProfile(profiles[idx]);
+  const { error } = await sb.from('profiles').upsert({ ...updated, user_id: _sbUser.id }, { onConflict: 'id' });
+  if (error) { toast('Erreur : ' + error.message); return; }
+  const newApikey = key || _profiles[idx].apikey;
+  if (newApikey) localStorage.setItem('mb_apikey_' + updated.id, newApikey);
+  _profiles[idx] = { ...updated, apikey: newApikey };
   renderProfileSwitcher(); renderProfilePills(); toast('Profil enregistré ✓');
 }
 
@@ -2182,13 +2158,13 @@ function renderFavorites(query = '') {
     </div>`).join('') + '</div>';
 }
 
-function removeFav(i) {
-  const favs = getFavorites();
-  const a = favs[i];
-  favs.splice(i, 1);
-  store.set('mb_favorites', favs);
+async function removeFav(i) {
+  const fav = _favorites[i];
+  if (!fav) return;
+  if (fav._sbId) await sb.from('favorites').delete().eq('id', fav._sbId);
+  _favorites.splice(i, 1);
+  refreshFavButtons(fav.titre);
   renderFavorites();
-  refreshFavButtons(a.titre);
   toast('Retiré des favoris');
 }
 
@@ -2284,11 +2260,10 @@ function renderHistory() {
 
 function toggleHistoryItem(i) { document.getElementById('hist-' + i).classList.toggle('open'); }
 
-function clearHistory() {
+async function clearHistory() {
   if (!confirm('Effacer tout l\'historique de ce profil ?')) return;
-  const p = getActiveProfile();
-  store.set('mb_history_' + p.id, []);
-  sbClearHistory(p.id);
+  await sb.from('history').delete().eq('profile_id', _activeProfileId);
+  _history = [];
   renderHistory(); renderStats(); toast('Historique effacé');
 }
 
@@ -2327,18 +2302,22 @@ function initDebug() {
 }
 
 // ─── Feedback articles ─────────────────────────────────────
-function getFeedback() { return store.get('mb_feedback') || []; }
+function getFeedback() { return _feedback; }
 
 function getFeedbackForArticle(titre) {
-  return getFeedback().find(f => f.titre === titre)?.rating || null;
+  return _feedback.find(f => f.titre === titre)?.rating || null;
 }
 
-function storeFeedback(i, rating) {
+async function storeFeedback(i, rating) {
   const a = _lastArticles[i];
-  if (!a) return;
-  const fb = getFeedback().filter(f => f.titre !== a.titre);
-  fb.unshift({ titre: a.titre, tag: a.tag, rating, ts: new Date().toISOString() });
-  store.set('mb_feedback', fb.slice(0, 100));
+  if (!a || !_activeProfileId || !_sbUser) return;
+  const { error } = await sb.from('feedback').upsert(
+    { profile_id: _activeProfileId, user_id: _sbUser.id, titre: a.titre, tag: a.tag, rating },
+    { onConflict: 'profile_id,titre' }
+  );
+  if (error) { dbg('feedback error', error); return; }
+  _feedback = _feedback.filter(f => f.titre !== a.titre);
+  _feedback.unshift({ titre: a.titre, tag: a.tag, rating });
   const cards = document.querySelectorAll('#articles-container .article-card');
   if (cards[i]) {
     cards[i].querySelectorAll('.feedback-btn').forEach(btn => {
@@ -2351,9 +2330,8 @@ function storeFeedback(i, rating) {
 }
 
 function buildFeedbackContext() {
-  const fb = getFeedback().slice(0, 40);
-  const bad = fb.filter(f => f.rating === 'bad').map(f => `- ${f.titre} (${f.tag})`);
-  const good = fb.filter(f => f.rating === 'good').map(f => `- ${f.titre} (${f.tag})`);
+  const bad = _feedback.filter(f => f.rating === 'bad').slice(0, 20).map(f => `- ${f.titre} (${f.tag})`);
+  const good = _feedback.filter(f => f.rating === 'good').slice(0, 20).map(f => `- ${f.titre} (${f.tag})`);
   let ctx = '';
   if (bad.length) ctx += `\nSUJETS JUGÉS NON PERTINENTS — À ÉVITER :\n${bad.join('\n')}\n`;
   if (good.length) ctx += `\nSUJETS APPRÉCIÉS — À PRIVILÉGIER (angles similaires) :\n${good.join('\n')}\n`;
