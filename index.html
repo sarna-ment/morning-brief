@@ -595,6 +595,82 @@
       content: ''; flex: 1; height: 1px; background: var(--border);
     }
 
+    /* ─── Debug bar ─────────────────────────────────────── */
+    #debug-bar {
+      display: none; align-items: center; gap: 8px;
+      padding: 4px 14px; flex-shrink: 0;
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      font-size: 11px; font-family: monospace; color: var(--text2);
+    }
+    #debug-bar.visible { display: flex; }
+    .debug-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: #9ca3af; }
+    .debug-dot.green { background: #22c55e; }
+    .debug-dot.orange { background: #f59e0b; }
+    .debug-dot.red { background: #ef4444; }
+
+    /* ─── Toggle switch ─────────────────────────────────── */
+    .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: var(--border); border-radius: 24px; transition: .2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      width: 18px; height: 18px; left: 3px; bottom: 3px;
+      background: #fff; border-radius: 50%; transition: .2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* ─── Feedback buttons ───────────────────────────────── */
+    .feedback-btns {
+      display: flex; align-items: center; gap: 5px; margin-top: 8px;
+      padding-top: 8px; border-top: 1px solid var(--border);
+    }
+    .feedback-label { font-size: 11px; color: var(--text2); margin-right: 2px; letter-spacing: .02em; }
+    .feedback-btn {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 3px 9px; font-size: 13px;
+      cursor: pointer; transition: all .15s; color: var(--text2);
+    }
+    .feedback-btn:hover { border-color: var(--accent); }
+    .feedback-btn.active-good { background: #dcfce7; border-color: #22c55e; }
+    .feedback-btn.active-neutral { background: #fef9c3; border-color: #ca8a04; }
+    .feedback-btn.active-bad { background: #fee2e2; border-color: #ef4444; }
+
+    /* ─── À la carte panel ───────────────────────────────── */
+    #alacarte-panel {
+      display: none; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 16px; animation: fadeUp .2s ease;
+    }
+    #alacarte-panel.open { display: block; }
+    #alacarte-chips {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin: 10px 0 14px; max-height: 160px; overflow-y: auto;
+    }
+    .alacarte-chip {
+      padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      background: var(--bg2); border: 1.5px solid var(--border); cursor: pointer;
+      transition: all .12s; color: var(--text2); user-select: none;
+    }
+    .alacarte-chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ─── Search bar (favoris) ───────────────────────────── */
+    .search-bar { position: relative; margin-bottom: 14px; }
+    .search-bar svg {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; stroke: var(--text2); pointer-events: none;
+    }
+    .search-bar input {
+      width: 100%; padding: 10px 12px 10px 36px;
+      border-radius: 10px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text); font-size: 14px;
+      outline: none; transition: border-color .15s; font-family: inherit;
+    }
+    .search-bar input:focus { border-color: var(--accent); }
+
     /* ─── Desktop layout ─────────────────────────────────── */
     @media (min-width: 768px) {
       body { overflow: auto; }
@@ -667,7 +743,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.2.0</div>
+      <div class="login-footer">Morning Brief v1.3.0</div>
     </div>
   </div>
 
@@ -745,6 +821,12 @@
 
   <!-- ══ MAIN APP ════════════════════════════════════════════ -->
   <div id="main-app" style="display:none; display:flex; flex-direction:column; flex:1; overflow:hidden;">
+    <!-- Debug bar (visible uniquement en mode debug) -->
+    <div id="debug-bar">
+      <div id="debug-dot" class="debug-dot"></div>
+      <span id="debug-msg">Debug · Prêt</span>
+      <span style="margin-left:auto;opacity:.6;" id="debug-user"></span>
+    </div>
 
     <!-- Brief -->
     <div id="screen-brief" class="screen active">
@@ -783,6 +865,20 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
           Podcast
         </button>
+        <button class="btn-secondary" id="btn-alacarte" onclick="toggleAlaCarte()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          À la carte
+        </button>
+      </div>
+      <!-- Panel à la carte -->
+      <div id="alacarte-panel">
+        <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Brief à la carte</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">Sélectionne les thèmes pour ce brief uniquement</div>
+        <div id="alacarte-chips"></div>
+        <button class="btn-primary" style="width:100%;" onclick="generateAlaCarte()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Générer ce brief personnalisé
+        </button>
       </div>
       <div id="articles-container" style="padding-bottom:4px;">
         <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
@@ -811,7 +907,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.2.0</div>
+      <div class="version-footer">Morning Brief v1.3.0</div>
     </div>
 
     <!-- Favoris -->
@@ -823,8 +919,12 @@
         </div>
         <button class="btn-ghost" onclick="clearFavorites()" style="color:#e05;">Effacer</button>
       </div>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
+      </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.2.0</div>
+      <div class="version-footer">Morning Brief v1.3.0</div>
     </div>
 
     <!-- Thèmes -->
@@ -841,7 +941,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.2.0</div>
+      <div class="version-footer">Morning Brief v1.3.0</div>
     </div>
 
     <!-- Profil -->
@@ -897,7 +997,21 @@
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:8px;" id="login-user-info"></div>
       </div>
-      <div class="version-footer">Morning Brief v1.2.0</div>
+      <div class="profil-section">
+        <h3>Développeur</h3>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0;">
+          <div>
+            <div style="font-size:14px;font-weight:600;">Mode debug</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;">Barre de statut sync · logs console</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="debug-toggle" onchange="toggleDebugMode(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="version-footer">Morning Brief v1.3.0</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -918,7 +1032,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.2.0</div>
+      <div class="version-footer">Morning Brief v1.3.0</div>
     </div>
 
     <!-- Nav -->
@@ -944,7 +1058,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.2.0</div>
+      <div class="nav-version">Morning Brief v1.3.0</div>
     </nav>
   </div>
 </div>
@@ -1061,6 +1175,8 @@ function showMainApp() {
 // ── Sync Supabase → localStorage ──────────────────────────
 async function syncFromSupabase() {
   if (!_sbUser) return;
+  setDebugStatus('syncing', 'Sync Supabase…');
+  dbg('syncFromSupabase start');
   try {
     // Profils
     const { data: profiles, error: profErr } = await sb.from('profiles').select('*').order('created_at');
@@ -1105,7 +1221,12 @@ async function syncFromSupabase() {
         .eq('profile_id', ap.id).order('saved_at', { ascending: false });
       if (favs?.length) store.set('mb_favorites', favs.map(f => ({ ...f.article, savedAt: f.saved_at, _sbId: f.id })));
     }
-  } catch(e) { console.warn('Sync error', e); }
+    setDebugStatus('ok', `Sync OK · ${new Date().toLocaleTimeString('fr-FR')}`);
+    dbg('syncFromSupabase done');
+  } catch(e) {
+    console.warn('Sync error', e);
+    setDebugStatus('error', `Sync erreur: ${e.message}`);
+  }
 }
 
 // ── Sync localStorage → Supabase ──────────────────────────
@@ -1374,6 +1495,7 @@ function initApp() {
   renderHistory();
   renderFavorites();
   renderProfileSwitcher();
+  initDebug();
 }
 
 // ─── Setup ────────────────────────────────────────────────
@@ -1515,6 +1637,7 @@ async function generateBrief(weekly = false) {
   document.getElementById('btn-audio').style.display = 'none';
   document.getElementById('btn-podcast').style.display = 'none';
   container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>${weekly ? 'Génération du brief hebdomadaire…' : 'L\'IA compose votre brief personnalisé…'}</p><p style="font-size:12px;opacity:.6;">Cela prend environ 10 secondes</p></div>`;
+  setDebugStatus('syncing', weekly ? 'Génération hebdo…' : 'Génération brief…');
   try {
     const prompt = weekly ? buildWeeklyPrompt(getProfile()) : buildPrompt(getProfile(), getThemes());
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1535,9 +1658,11 @@ async function generateBrief(weekly = false) {
     document.getElementById('brief-subtitle').textContent = `${articles.length} articles ${weekly ? 'hebdo' : 'du jour'}`;
     document.getElementById('btn-audio').style.display = 'flex';
     document.getElementById('btn-podcast').style.display = 'flex';
+    setDebugStatus('ok', `Brief généré (${articles.length} articles) ✓`);
   } catch (e) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Erreur</h3><p>${esc(e.message)}</p></div>`;
     toast('Erreur : ' + e.message, 4000);
+    setDebugStatus('error', e.message);
   } finally { btn.disabled = false; }
 }
 
@@ -1548,6 +1673,7 @@ function buildPrompt(profile, themes) {
   const history = getHistory();
   const recent = history.slice(0, 5).flatMap(h => h.articles.map(a => `- ${a.titre} (${a.tag})`));
   const avoid = recent.length ? `\nSUJETS DÉJÀ TRAITÉS — NE PAS RÉUTILISER :\n${recent.join('\n')}\n` : '';
+  const feedbackCtx = buildFeedbackContext();
   return `Tu es un assistant éditorial expert. Génère exactement 5 articles courts pour le morning brief de cet utilisateur.
 
 PROFIL :
@@ -1557,7 +1683,7 @@ PROFIL :
 - Style souhaité : ${profile.style || 'concis et actionnable'}
 
 THÈMES DISPONIBLES (choisis librement pour la surprise) : ${selected}
-${avoid}
+${avoid}${feedbackCtx}
 RÈGLE : choisis les thèmes de manière surprenante et variée. L'utilisateur doit être agréablement surpris.
 
 Format EXACT — tableau JSON de 5 objets :
@@ -1592,7 +1718,9 @@ function parseArticles(raw) {
 }
 
 function renderArticles(articles, container) {
-  container.innerHTML = '<div class="articles-list">' + articles.map((a, i) => `
+  container.innerHTML = '<div class="articles-list">' + articles.map((a, i) => {
+    const fb = getFeedbackForArticle(a.titre);
+    return `
     <div class="article-card" onclick="openReader(${i})" style="cursor:pointer;">
       <div class="article-meta">
         <span class="article-tag">${esc(a.tag)}</span>
@@ -1606,7 +1734,14 @@ function renderArticles(articles, container) {
         <button class="btn-icon" onclick="shareArticle(_lastArticles[${i}])" title="Partager">↗</button>
         <button class="btn-icon" onclick="openReader(${i})" title="Lire">📖</button>
       </div>
-    </div>`).join('') + '</div>';
+      <div class="feedback-btns" onclick="event.stopPropagation()">
+        <span class="feedback-label">Utile ?</span>
+        <button class="feedback-btn ${fb==='good'?'active-good':''}" data-rating="good" onclick="storeFeedback(${i},'good')">👍</button>
+        <button class="feedback-btn ${fb==='neutral'?'active-neutral':''}" data-rating="neutral" onclick="storeFeedback(${i},'neutral')">😐</button>
+        <button class="feedback-btn ${fb==='bad'?'active-bad':''}" data-rating="bad" onclick="storeFeedback(${i},'bad')">👎</button>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
 }
 
 // ─── Immersive reader ─────────────────────────────────────
@@ -2010,17 +2145,29 @@ function toggleApiKeyVisibility() {
 }
 
 // ─── Favoris ──────────────────────────────────────────────
-function renderFavorites() {
-  const favs = getFavorites();
+function renderFavorites(query = '') {
+  const allFavs = getFavorites();
+  const q = (query || '').toLowerCase().trim();
+  const favs = q ? allFavs.filter(a =>
+    (a.titre || '').toLowerCase().includes(q) ||
+    (a.tag || '').toLowerCase().includes(q) ||
+    (a.corps || '').toLowerCase().includes(q)
+  ) : allFavs;
   const container = document.getElementById('favoris-container');
   const subtitle = document.getElementById('fav-subtitle');
-  if (subtitle) subtitle.textContent = `${favs.length} article${favs.length > 1 ? 's' : ''} sauvegardé${favs.length > 1 ? 's' : ''}`;
-  if (!favs.length) {
+  if (subtitle) subtitle.textContent = q
+    ? `${favs.length} résultat${favs.length > 1 ? 's' : ''} pour « ${q} »`
+    : `${allFavs.length} article${allFavs.length > 1 ? 's' : ''} sauvegardé${allFavs.length > 1 ? 's' : ''}`;
+  if (!allFavs.length) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">⭐</div><h3>Aucun favori</h3><p>Appuyez sur ☆ dans un article pour le sauvegarder ici.</p></div>`;
     return;
   }
+  if (q && !favs.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><h3>Aucun résultat</h3><p>Essayez un autre mot-clé.</p></div>`;
+    return;
+  }
   container.innerHTML = '<div class="articles-list">' + favs.map((a, i) => `
-    <div class="article-card" style="cursor:pointer;" onclick="openFavReader(${i})">
+    <div class="article-card" style="cursor:pointer;" onclick="openFavReader(${allFavs.indexOf(a)})">
       <div class="article-meta">
         <span class="article-tag">${esc(a.tag)}</span>
         <span class="article-time">⏱ ${esc(a.lecture)}</span>
@@ -2029,8 +2176,8 @@ function renderFavorites() {
       <div class="article-body">${esc(a.corps)}</div>
       <div class="article-insight">${esc(a.insight)}</div>
       <div class="article-actions" onclick="event.stopPropagation()">
-        <button class="btn-icon fav-active" onclick="removeFav(${i})" title="Retirer">⭐</button>
-        <button class="btn-icon" onclick="shareArticle(getFavorites()[${i}])" title="Partager">↗</button>
+        <button class="btn-icon fav-active" onclick="removeFav(${allFavs.indexOf(a)})" title="Retirer">⭐</button>
+        <button class="btn-icon" onclick="shareArticle(getFavorites()[${allFavs.indexOf(a)}])" title="Partager">↗</button>
       </div>
     </div>`).join('') + '</div>';
 }
@@ -2046,11 +2193,20 @@ function removeFav(i) {
 }
 
 function openFavReader(i) {
-  const a = getFavorites()[i];
-  if (!a) return;
-  _lastArticles = getFavorites();
+  const favs = getFavorites();
+  if (!favs[i]) return;
+  _lastArticles = favs;
   _readerIdx = i;
   openReader(i);
+}
+
+function openHistoryReader(entryIdx, articleIdx) {
+  const history = getHistory();
+  const entry = history[entryIdx];
+  if (!entry?.articles?.length) return;
+  _lastArticles = entry.articles;
+  _readerIdx = articleIdx;
+  openReader(articleIdx);
 }
 
 // ─── Stats ────────────────────────────────────────────────
@@ -2114,8 +2270,8 @@ function renderHistory() {
       <div class="history-item-preview">${entry.articles.map(a => a.tag).join(' · ')}</div>
       <div class="history-detail" id="hist-${i}">
         <div style="margin-top:12px;" class="articles-list">
-          ${entry.articles.map(a => `
-            <div class="article-card" style="animation:none;">
+          ${entry.articles.map((a, j) => `
+            <div class="article-card" style="animation:none;cursor:pointer;" onclick="event.stopPropagation();openHistoryReader(${i},${j})">
               <div class="article-meta"><span class="article-tag">${esc(a.tag)}</span><span class="article-time">⏱ ${esc(a.lecture)}</span></div>
               <div class="article-title">${esc(a.titre)}</div>
               <div class="article-body">${esc(a.corps)}</div>
@@ -2134,6 +2290,149 @@ function clearHistory() {
   store.set('mb_history_' + p.id, []);
   sbClearHistory(p.id);
   renderHistory(); renderStats(); toast('Historique effacé');
+}
+
+// ─── Debug mode ───────────────────────────────────────────
+function isDebug() {
+  // ON par défaut ; stocker '0' pour désactiver
+  const v = localStorage.getItem('mb_debug');
+  return v === null ? true : v !== '0';
+}
+function dbg(...args) { if (isDebug()) console.log('[MB]', ...args); }
+
+function setDebugStatus(state, msg) {
+  const bar = document.getElementById('debug-bar');
+  if (!bar) return;
+  if (!isDebug()) { bar.classList.remove('visible'); return; }
+  bar.classList.add('visible');
+  const dot = document.getElementById('debug-dot');
+  dot.className = 'debug-dot' + (state === 'ok' ? ' green' : state === 'syncing' ? ' orange' : state === 'error' ? ' red' : '');
+  const msgEl = document.getElementById('debug-msg');
+  if (msgEl) msgEl.textContent = `Debug · ${msg}`;
+  const userEl = document.getElementById('debug-user');
+  if (userEl) userEl.textContent = _sbUser?.email || '';
+}
+
+function toggleDebugMode(on) {
+  localStorage.setItem('mb_debug', on ? '1' : '0');
+  if (!on) document.getElementById('debug-bar')?.classList.remove('visible');
+  else setDebugStatus('', 'Activé');
+  toast(on ? 'Mode debug activé' : 'Mode debug désactivé');
+}
+
+function initDebug() {
+  const toggle = document.getElementById('debug-toggle');
+  if (toggle) toggle.checked = isDebug();
+  if (isDebug()) setDebugStatus('', `Session: ${_sbUser?.email || 'non connecté'}`);
+}
+
+// ─── Feedback articles ─────────────────────────────────────
+function getFeedback() { return store.get('mb_feedback') || []; }
+
+function getFeedbackForArticle(titre) {
+  return getFeedback().find(f => f.titre === titre)?.rating || null;
+}
+
+function storeFeedback(i, rating) {
+  const a = _lastArticles[i];
+  if (!a) return;
+  const fb = getFeedback().filter(f => f.titre !== a.titre);
+  fb.unshift({ titre: a.titre, tag: a.tag, rating, ts: new Date().toISOString() });
+  store.set('mb_feedback', fb.slice(0, 100));
+  const cards = document.querySelectorAll('#articles-container .article-card');
+  if (cards[i]) {
+    cards[i].querySelectorAll('.feedback-btn').forEach(btn => {
+      const r = btn.dataset.rating;
+      btn.className = 'feedback-btn' + (r === rating ? ` active-${r}` : '');
+    });
+  }
+  dbg('Feedback:', a.titre, '->', rating);
+  toast(rating === 'good' ? '👍 Super, noté !' : rating === 'bad' ? '👎 Compris, on évite.' : '😐 Noté');
+}
+
+function buildFeedbackContext() {
+  const fb = getFeedback().slice(0, 40);
+  const bad = fb.filter(f => f.rating === 'bad').map(f => `- ${f.titre} (${f.tag})`);
+  const good = fb.filter(f => f.rating === 'good').map(f => `- ${f.titre} (${f.tag})`);
+  let ctx = '';
+  if (bad.length) ctx += `\nSUJETS JUGÉS NON PERTINENTS — À ÉVITER :\n${bad.join('\n')}\n`;
+  if (good.length) ctx += `\nSUJETS APPRÉCIÉS — À PRIVILÉGIER (angles similaires) :\n${good.join('\n')}\n`;
+  return ctx;
+}
+
+// ─── Brief à la carte ─────────────────────────────────────
+let _alacarteOpen = false;
+let _alacarteSel = [];
+
+function toggleAlaCarte() {
+  _alacarteOpen = !_alacarteOpen;
+  const panel = document.getElementById('alacarte-panel');
+  const btn = document.getElementById('btn-alacarte');
+  if (_alacarteOpen) {
+    _alacarteSel = getThemes().slice(0, 5);
+    renderAlaCarte();
+    panel.classList.add('open');
+    btn.style.background = 'var(--accent)'; btn.style.color = '#fff';
+  } else {
+    panel.classList.remove('open');
+    btn.style.background = ''; btn.style.color = '';
+  }
+}
+
+function renderAlaCarte() {
+  const chips = document.getElementById('alacarte-chips');
+  if (!chips) return;
+  chips.innerHTML = ALL_THEMES.map(t => `
+    <div class="alacarte-chip ${_alacarteSel.includes(t) ? 'selected' : ''}"
+         onclick="toggleAlacarteChip(this,'${t.replace(/'/g, "\\'")}')">
+      ${esc(t)}
+    </div>`).join('');
+}
+
+function toggleAlacarteChip(el, tag) {
+  if (_alacarteSel.includes(tag)) {
+    _alacarteSel = _alacarteSel.filter(t => t !== tag);
+  } else {
+    _alacarteSel.push(tag);
+  }
+  el.classList.toggle('selected');
+}
+
+async function generateAlaCarte() {
+  if (!_alacarteSel.length) { toast('Sélectionne au moins un thème'); return; }
+  toggleAlaCarte();
+  const apiKey = getApiKey();
+  if (!apiKey) { toast('Clé API manquante'); return; }
+  const btn = document.getElementById('btn-generate');
+  btn.disabled = true;
+  document.getElementById('btn-audio').style.display = 'none';
+  document.getElementById('btn-podcast').style.display = 'none';
+  const container = document.getElementById('articles-container');
+  container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Brief à la carte en cours…</p><p style="font-size:12px;opacity:.6;">${_alacarteSel.slice(0,3).join(', ')}…</p></div>`;
+  setDebugStatus('syncing', 'Génération à la carte…');
+  try {
+    const prompt = buildPrompt(getProfile(), _alacarteSel);
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+    const data = await res.json();
+    const articles = parseArticles(data.content[0].text);
+    if (!articles.length) throw new Error('Format inattendu');
+    _lastArticles = articles;
+    renderArticles(articles, container);
+    saveToHistory(articles);
+    document.getElementById('brief-subtitle').textContent = `${articles.length} articles · à la carte`;
+    document.getElementById('btn-audio').style.display = 'flex';
+    document.getElementById('btn-podcast').style.display = 'flex';
+    setDebugStatus('ok', 'Brief à la carte généré ✓');
+  } catch(e) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Erreur</h3><p>${esc(e.message)}</p></div>`;
+    toast('Erreur : ' + e.message, 4000);
+    setDebugStatus('error', e.message);
+  } finally { btn.disabled = false; }
 }
 
 // ─── Utils ────────────────────────────────────────────────
