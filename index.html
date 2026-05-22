@@ -749,7 +749,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.4.1</div>
+      <div class="login-footer">Morning Brief v1.4.2</div>
     </div>
   </div>
 
@@ -901,7 +901,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.4.1</div>
+      <div class="version-footer">Morning Brief v1.4.2</div>
     </div>
 
     <!-- Favoris -->
@@ -918,7 +918,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.4.1</div>
+      <div class="version-footer">Morning Brief v1.4.2</div>
     </div>
 
     <!-- Thèmes -->
@@ -935,7 +935,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.4.1</div>
+      <div class="version-footer">Morning Brief v1.4.2</div>
     </div>
 
     <!-- Profil -->
@@ -1012,7 +1012,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.4.1</div>
+      <div class="version-footer">Morning Brief v1.4.2</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1033,7 +1033,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.4.1</div>
+      <div class="version-footer">Morning Brief v1.4.2</div>
     </div>
 
     <!-- Nav -->
@@ -1059,7 +1059,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.4.1</div>
+      <div class="nav-version">Morning Brief v1.4.2</div>
     </nav>
   </div>
 </div>
@@ -1139,6 +1139,13 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 let _sbUser = null;
 
+// ── Machine à états d'authentification ───────────────────
+// Garantit qu'un seul flux init tourne à la fois et détecte les
+// changements de compte ou les reprises depuis l'arrière-plan.
+let _authReady     = false;  // vrai dès que le premier boot est résolu
+let _authBusy      = false;  // mutex : empêche les appels concurrents
+let _lastUserId    = null;   // détecte un changement de compte
+
 // ── Auth ──────────────────────────────────────────────────
 async function loginWithGoogle() {
   const { error } = await sb.auth.signInWithOAuth({
@@ -1168,8 +1175,7 @@ async function sendMagicLink() {
 async function logout() {
   if (!confirm('Se déconnecter ?')) return;
   await sb.auth.signOut();
-  _sbUser = null;
-  showLoginScreen();
+  // _resetAuthState + showLoginScreen sont gérés par l'événement SIGNED_OUT
   toast('Déconnecté');
 }
 
@@ -1483,58 +1489,122 @@ async function clearFavorites() {
   renderFavorites(); toast('Favoris effacés');
 }
 
-// ─── Init ─────────────────────────────────────────────────
+// ─── Init ─────────────────────────────────────────────────────────
 window.addEventListener('load', async () => {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-  // onAuthStateChange doit être enregistré EN PREMIER pour ne pas manquer
-  // l'événement INITIAL_SESSION qui traite le hash OAuth (#access_token=…)
+  // onAuthStateChange enregistré EN PREMIER (capture INITIAL_SESSION du hash OAuth)
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'INITIAL_SESSION') {
-      if (session) {
-        _sbUser = session.user;
-        await afterAuth();
-      } else {
-        showLoginScreen();
-      }
-    } else if (event === 'SIGNED_IN' && session && !_sbUser) {
-      _sbUser = session.user;
-      await afterAuth();
-    } else if (event === 'SIGNED_OUT') {
-      _sbUser = null;
+    dbg('auth event:', event, session?.user?.email || '—');
+
+    if (event === 'SIGNED_OUT') {
+      _resetAuthState();
       showLoginScreen();
+      return;
+    }
+
+    if (event === 'TOKEN_REFRESHED') {
+      if (session?.user) _sbUser = session.user;
+      return;
+    }
+
+    // INITIAL_SESSION (boot) et SIGNED_IN (après OAuth / magic link)
+    if (session?.user) {
+      await _initFromSession(session);
+    } else if (event === 'INITIAL_SESSION') {
+      _authReady = true;
+      showLoginScreen();
+    }
+  });
+
+  // Reprise depuis l'arrière-plan (changement d'app, veille écran…)
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState !== 'visible') return;
+    if (!_authReady) return;
+
+    const { data: { session } } = await sb.auth.getSession();
+
+    if (!session?.user) {
+      _resetAuthState();
+      showLoginScreen();
+      toast('Session expirée — reconnectez-vous.', 4000);
+      return;
+    }
+
+    if (session.user.id !== _lastUserId) {
+      await _initFromSession(session);
+      return;
+    }
+
+    _sbUser = session.user;
+    const mainVisible = document.getElementById('main-app').style.display !== 'none';
+    if (!mainVisible) {
+      dbg('reprise: écran intermédiaire, re-résolution navigation');
+      _resolveNavigation();
     }
   });
 });
 
-async function afterAuth() {
-  const el = document.getElementById('login-user-info');
-  if (el && _sbUser) el.textContent = `Connecté : ${_sbUser.email}`;
+function _resetAuthState() {
+  _sbUser = null; _lastUserId = null; _authReady = false; _authBusy = false;
+  _profiles = []; _history = []; _favorites = []; _feedback = [];
+  _activeProfileId = ''; _theme = 'coral';
+}
 
-  // Test d'accès DB en écriture (table test_log — doit exister en Supabase)
-  try {
-    const { error: testErr } = await sb.from('test_log').insert({
-      user_id: _sbUser.id,
-      message: 'auth ' + new Date().toISOString()
-    });
-    dbg('test_log insert:', testErr ? 'ERREUR ' + testErr.message : 'OK ✓');
-    setDebugStatus(testErr ? 'error' : 'ok', testErr ? 'DB write KO: ' + testErr.message : 'DB write OK ✓');
-  } catch(e) {
-    dbg('test_log exception:', e.message);
-    setDebugStatus('error', 'DB write exception: ' + e.message);
+async function _initFromSession(session) {
+  if (_authBusy) { dbg('_initFromSession: occupé, ignoré'); return; }
+
+  const newUserId = session.user.id;
+
+  if (_authReady && newUserId === _lastUserId) {
+    dbg('_initFromSession: même user déjà prêt, re-résolution nav');
+    _sbUser = session.user;
+    _resolveNavigation();
+    return;
   }
 
-  await loadAllData();
+  _authBusy = true;
+  try {
+    if (_lastUserId && newUserId !== _lastUserId) {
+      dbg('_initFromSession: changement de compte');
+      _profiles = []; _history = []; _favorites = []; _feedback = [];
+      _activeProfileId = ''; _theme = 'coral';
+    }
+
+    _sbUser = session.user;
+    _lastUserId = newUserId;
+
+    const el = document.getElementById('login-user-info');
+    if (el) el.textContent = `Connecté : ${_sbUser.email}`;
+
+    try {
+      const { error: testErr } = await sb.from('test_log').insert({
+        user_id: _sbUser.id, message: 'auth ' + new Date().toISOString()
+      });
+      dbg('test_log:', testErr ? 'KO ' + testErr.message : 'OK ✓');
+      setDebugStatus(testErr ? 'error' : 'ok', testErr ? 'DB write KO: ' + testErr.message : 'DB write OK ✓');
+    } catch(e) {
+      dbg('test_log exception:', e.message);
+      setDebugStatus('error', 'DB write exception: ' + e.message);
+    }
+
+    await loadAllData();
+    _authReady = true;
+    _resolveNavigation();
+  } finally {
+    _authBusy = false;
+  }
+}
+
+function _resolveNavigation() {
   if (!getApiKey()) {
     const p = getActiveProfile();
     if (p?.encrypted_apikey) {
-      // Clé chiffrée dispo → demander le PIN
-      showPinModal(`Bonjour${p.name ? ' ' + p.name.split(' ')[0] : ''} ! Entrez votre PIN pour déverrouiller.`);
+      const prenom = p.name ? ' ' + p.name.split(' ')[0] : '';
+      showPinModal(`Bonjour${prenom} ! Entrez votre PIN pour déverrouiller.`);
     } else if (_profiles.length > 0) {
-      // Profil existant, pas de clé chiffrée → mode retour (clé seule)
       showSetupScreen('returning');
     } else {
-      // Nouveau compte → setup complet
       showSetupScreen('new');
     }
   } else {
@@ -1542,7 +1612,6 @@ async function afterAuth() {
     initApp();
   }
 }
-
 function initApp() {
   loadTheme();
   renderBriefScreen();
