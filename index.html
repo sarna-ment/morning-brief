@@ -574,6 +574,17 @@
       margin-top: 20px; letter-spacing: 0.04em;
     }
 
+    /* ─── Setup modes ───────────────────────────────────── */
+    .setup-returning-only { display: none; }
+    #screen-setup.returning .setup-new-only { display: none !important; }
+    #screen-setup.returning .setup-returning-only { display: block !important; }
+    .setup-returning-hint {
+      background: var(--accent-light); border: 1px solid var(--accent);
+      border-radius: 10px; padding: 10px 14px;
+      font-size: 13px; color: var(--accent2); line-height: 1.5;
+      margin-top: 8px;
+    }
+
     /* ─── PIN modal ─────────────────────────────────────── */
     #screen-pin {
       display: none; position: fixed; inset: 0; z-index: 200;
@@ -738,22 +749,28 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.4.0</div>
+      <div class="login-footer">Morning Brief v1.4.1</div>
     </div>
   </div>
 
   <!-- ══ SETUP ══════════════════════════════════════════════ -->
   <div id="screen-setup">
-    <div style="text-align:center;padding:32px 0 24px;">
+    <!-- Entête nouveau profil -->
+    <div class="setup-new-only" style="text-align:center;padding:32px 0 24px;">
       <div style="font-size:44px;margin-bottom:10px;">☀️</div>
       <h2 style="font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px;">Morning Brief</h2>
       <p style="font-size:14px;color:var(--text2);">Configurez votre profil pour commencer</p>
     </div>
 
-    <div class="form-group">
-      <label>Votre prénom</label>
-      <input type="text" id="setup-name" placeholder="Ex : Marie, Thomas…" />
+    <!-- Message de retour (utilisateur existant, clé absente) -->
+    <div class="setup-returning-only" style="text-align:center;padding:32px 0 20px;">
+      <div style="font-size:44px;margin-bottom:10px;">👋</div>
+      <h2 id="setup-welcome-name" style="font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px;">Content de vous revoir !</h2>
+      <p style="font-size:14px;color:var(--text2);">Votre profil est intact. Resaisissez simplement votre clé API pour continuer.</p>
+      <div class="setup-returning-hint">Votre clé API est stockée uniquement sur votre appareil. Elle n'a pas pu être récupérée automatiquement (appareil différent ou données effacées).</div>
     </div>
+
+    <!-- Champs communs à nouveau et retour -->
     <div class="form-group">
       <label>Clé API Anthropic</label>
       <input type="password" id="setup-apikey" placeholder="sk-ant-…" autocomplete="off" />
@@ -768,23 +785,32 @@
         style="width:140px;font-size:24px;letter-spacing:10px;padding:12px 8px 12px 18px;" />
       <div class="setup-note">🔐 Chiffre votre clé (AES-256) — récupérez-la sur n'importe quel appareil.</div>
     </div>
-    <div class="form-group">
-      <label>Votre rôle <span style="font-weight:400;text-transform:none;font-size:12px;">(aide l'IA à cibler les bons sujets)</span></label>
-      <input type="text" id="setup-role" placeholder="Ex : Manager IT, développeuse, entrepreneur, étudiant…" />
+
+    <!-- Champs profil uniquement pour nouveau compte -->
+    <div class="setup-new-only">
+      <div class="form-group">
+        <label>Votre prénom</label>
+        <input type="text" id="setup-name" placeholder="Ex : Marie, Thomas…" />
+      </div>
+      <div class="form-group">
+        <label>Votre rôle <span style="font-weight:400;text-transform:none;font-size:12px;">(aide l'IA à cibler les bons sujets)</span></label>
+        <input type="text" id="setup-role" placeholder="Ex : Manager IT, développeuse, entrepreneur, étudiant…" />
+      </div>
+      <div class="form-group">
+        <label>Contexte <span style="font-weight:400;text-transform:none;font-size:12px;">optionnel</span></label>
+        <textarea id="setup-context" placeholder="Ex : secteur d'activité, projets en cours, zones géographiques qui vous intéressent…"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Objectif d'apprentissage <span style="font-weight:400;text-transform:none;font-size:12px;">optionnel</span></label>
+        <input type="text" id="setup-goal" placeholder="Ex : rester à la pointe de l'IA, développer ma culture générale…" />
+      </div>
     </div>
-    <div class="form-group">
-      <label>Contexte <span style="font-weight:400;text-transform:none;font-size:12px;">optionnel</span></label>
-      <textarea id="setup-context" placeholder="Ex : secteur d'activité, projets en cours, zones géographiques qui vous intéressent…"></textarea>
-    </div>
-    <div class="form-group">
-      <label>Objectif d'apprentissage <span style="font-weight:400;text-transform:none;font-size:12px;">optionnel</span></label>
-      <input type="text" id="setup-goal" placeholder="Ex : rester à la pointe de l'IA, développer ma culture générale…" />
-    </div>
+
     <button class="btn-primary" onclick="setupSave()" style="margin-top:8px;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
-      Créer mon brief
+      <span id="setup-btn-label">Créer mon brief</span>
     </button>
-    <p style="text-align:center;font-size:12px;color:var(--text2);margin-top:16px;">Vous pourrez affiner vos thèmes et votre profil à tout moment.</p>
+    <p class="setup-new-only" style="text-align:center;font-size:12px;color:var(--text2);margin-top:16px;">Vous pourrez affiner vos thèmes et votre profil à tout moment.</p>
   </div>
 
   <!-- ══ MAIN APP ════════════════════════════════════════════ -->
@@ -875,7 +901,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.4.0</div>
+      <div class="version-footer">Morning Brief v1.4.1</div>
     </div>
 
     <!-- Favoris -->
@@ -892,7 +918,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.4.0</div>
+      <div class="version-footer">Morning Brief v1.4.1</div>
     </div>
 
     <!-- Thèmes -->
@@ -909,7 +935,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.4.0</div>
+      <div class="version-footer">Morning Brief v1.4.1</div>
     </div>
 
     <!-- Profil -->
@@ -986,7 +1012,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.4.0</div>
+      <div class="version-footer">Morning Brief v1.4.1</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1007,7 +1033,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.4.0</div>
+      <div class="version-footer">Morning Brief v1.4.1</div>
     </div>
 
     <!-- Nav -->
@@ -1033,7 +1059,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.4.0</div>
+      <div class="nav-version">Morning Brief v1.4.1</div>
     </nav>
   </div>
 </div>
@@ -1202,7 +1228,7 @@ async function submitPin() {
   _profiles = _profiles.map(pp => pp.id === p.id ? { ...pp, apikey } : pp);
   hidePinModal(); showMainApp(); initApp();
 }
-function pinForgot() { hidePinModal(); showSetupScreen(); }
+function pinForgot() { hidePinModal(); showSetupScreen('returning'); }
 
 // ── Écrans ────────────────────────────────────────────────
 function showLoginScreen() {
@@ -1211,11 +1237,25 @@ function showLoginScreen() {
   document.getElementById('screen-setup').style.display = 'none';
   document.getElementById('main-app').style.display = 'none';
 }
-function showSetupScreen() {
+function showSetupScreen(mode) {
   hidePinModal();
+  const el = document.getElementById('screen-setup');
+  el.style.display = 'flex';
   document.getElementById('screen-login').style.display = 'none';
-  document.getElementById('screen-setup').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
+  if (mode === 'returning') {
+    el.classList.add('returning');
+    const p = getActiveProfile();
+    const prenom = p?.name ? p.name.split(' ')[0] : '';
+    const welcome = document.getElementById('setup-welcome-name');
+    if (welcome) welcome.textContent = prenom ? `Content de vous revoir, ${prenom} !` : 'Content de vous revoir !';
+    const lbl = document.getElementById('setup-btn-label');
+    if (lbl) lbl.textContent = 'Déverrouiller mon brief';
+  } else {
+    el.classList.remove('returning');
+    const lbl = document.getElementById('setup-btn-label');
+    if (lbl) lbl.textContent = 'Créer mon brief';
+  }
 }
 function showMainApp() {
   hidePinModal();
@@ -1490,14 +1530,12 @@ async function afterAuth() {
     if (p?.encrypted_apikey) {
       // Clé chiffrée dispo → demander le PIN
       showPinModal(`Bonjour${p.name ? ' ' + p.name.split(' ')[0] : ''} ! Entrez votre PIN pour déverrouiller.`);
+    } else if (_profiles.length > 0) {
+      // Profil existant, pas de clé chiffrée → mode retour (clé seule)
+      showSetupScreen('returning');
     } else {
-      // Pas de clé chiffrée → setup (pré-remplir si profil existant)
-      if (_profiles.length > 0) {
-        const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-        f('setup-name', p.name); f('setup-role', p.role);
-        f('setup-context', p.context); f('setup-goal', p.goal);
-      }
-      showSetupScreen();
+      // Nouveau compte → setup complet
+      showSetupScreen('new');
     }
   } else {
     showMainApp();
