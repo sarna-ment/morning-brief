@@ -765,7 +765,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.5.1</div>
+      <div class="login-footer">Morning Brief v1.5.2</div>
     </div>
   </div>
 
@@ -917,7 +917,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.5.1</div>
+      <div class="version-footer">Morning Brief v1.5.2</div>
     </div>
 
     <!-- Favoris -->
@@ -934,7 +934,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.5.1</div>
+      <div class="version-footer">Morning Brief v1.5.2</div>
     </div>
 
     <!-- Thèmes -->
@@ -951,7 +951,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.5.1</div>
+      <div class="version-footer">Morning Brief v1.5.2</div>
     </div>
 
     <!-- Profil -->
@@ -1028,7 +1028,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.5.1</div>
+      <div class="version-footer">Morning Brief v1.5.2</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1049,7 +1049,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.5.1</div>
+      <div class="version-footer">Morning Brief v1.5.2</div>
     </div>
 
     <!-- Nav -->
@@ -1075,7 +1075,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.5.1</div>
+      <div class="nav-version">Morning Brief v1.5.2</div>
     </nav>
   </div>
 </div>
@@ -1900,12 +1900,34 @@ async function generateBrief(weekly = false) {
 
 function generateWeekly() { generateBrief(true); }
 
+function _buildHistoryContext(history) {
+  // Titres récents (7 derniers briefs) — exclusion exacte des répétitions
+  const recentTitles = history.slice(0, 7)
+    .flatMap(h => h.articles.map(a => `- ${a.titre} (${a.tag})`));
+
+  // Fréquence des tags sur 25 briefs — 1 ligne compacte pour équilibrer la couverture
+  const tagCount = {};
+  history.forEach(h => h.articles.forEach(a => {
+    tagCount[a.tag] = (tagCount[a.tag] || 0) + 1;
+  }));
+  const tagBalance = Object.entries(tagCount)
+    .sort((a, b) => b[1] - a[1])
+    .map(([t, n]) => `${t}×${n}`).join('  ');
+
+  const parts = [];
+  if (recentTitles.length)
+    parts.push(`TITRES RÉCENTS — ne pas réutiliser :\n${recentTitles.join('\n')}`);
+  if (tagBalance)
+    parts.push(`COUVERTURE SUR ${history.length} BRIEFS — favoriser les thèmes peu couverts :\n${tagBalance}`);
+  return parts.join('\n\n');
+}
+
 function buildPrompt(profile, themes) {
   const selected = themes.length ? themes.join(', ') : 'développement personnel, management, technologie';
-  const history = getHistory();
-  const recent = history.slice(0, 5).flatMap(h => h.articles.map(a => `- ${a.titre} (${a.tag})`));
-  const avoid = recent.length ? `\nSUJETS DÉJÀ TRAITÉS — NE PAS RÉUTILISER :\n${recent.join('\n')}\n` : '';
+  const history = getHistory().slice(0, 25);
+  const historyCtx = _buildHistoryContext(history);
   const feedbackCtx = buildFeedbackContext();
+  const memoire = [historyCtx, feedbackCtx.trim()].filter(Boolean).join('\n\n');
   return `Tu es un assistant éditorial expert. Génère exactement 5 articles courts pour le morning brief de cet utilisateur.
 
 PROFIL :
@@ -1915,7 +1937,9 @@ PROFIL :
 - Style souhaité : ${profile.style || 'concis et actionnable'}
 
 THÈMES DISPONIBLES (choisis librement pour la surprise) : ${selected}
-${avoid}${feedbackCtx}
+
+${memoire}
+
 RÈGLE : choisis les thèmes de manière surprenante et variée. L'utilisateur doit être agréablement surpris.
 
 Format EXACT — tableau JSON de 5 objets :
@@ -1925,9 +1949,12 @@ Réponds UNIQUEMENT avec le JSON valide.`;
 }
 
 function buildWeeklyPrompt(profile) {
-  const history = getHistory().slice(0, 7);
-  const covered = history.flatMap(h => h.articles.map(a => a.tag));
-  const topTags = [...new Set(covered)].slice(0, 8).join(', ') || 'management, IA, géopolitique';
+  const history = getHistory().slice(0, 25);
+  // Tags de la semaine écoulée (7 derniers briefs) pour la synthèse
+  const weekTags = [...new Set(
+    history.slice(0, 7).flatMap(h => h.articles.map(a => a.tag))
+  )].slice(0, 8).join(', ') || 'management, IA, géopolitique';
+  const historyCtx = _buildHistoryContext(history);
   return `Tu es un assistant éditorial expert. Génère un brief hebdomadaire de 5 articles synthétiques.
 
 PROFIL :
@@ -1935,7 +1962,9 @@ PROFIL :
 - Contexte : ${profile.context || ''}
 - Style souhaité : ${profile.style || 'concis et actionnable'}
 
-THÈMES DE LA SEMAINE à synthétiser : ${topTags}
+THÈMES DE LA SEMAINE à synthétiser : ${weekTags}
+
+${historyCtx}
 
 Génère 5 articles de synthèse hebdomadaire, tendances et perspectives de la semaine.
 
