@@ -398,33 +398,49 @@
     .podcast-overlay {
       display: none; position: fixed; inset: 0; z-index: 600;
       background: linear-gradient(160deg, #1a0a04 0%, #2d1208 50%, #1a0a04 100%);
-      flex-direction: column; align-items: center; justify-content: center;
-      padding: 32px 24px;
+      flex-direction: column; align-items: center; justify-content: flex-start;
+      padding: 64px 24px 48px;
+      overflow-y: auto;
     }
     .podcast-overlay.open { display: flex; }
     .podcast-close {
-      position: absolute; top: 20px; right: 20px;
+      position: fixed; top: 16px; right: 16px;
       background: rgba(255,255,255,.1); border: none; border-radius: 50%;
       width: 40px; height: 40px; color: rgba(255,255,255,.7); font-size: 20px;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
+      z-index: 10;
     }
     .podcast-close:hover { background: rgba(255,255,255,.2); }
-    .podcast-icon { font-size: 56px; margin-bottom: 16px; animation: podFloat 3s ease-in-out infinite; }
+    .podcast-icon {
+      font-size: 56px; margin-bottom: 16px;
+      animation: podFloat 3s ease-in-out infinite;
+      transition: font-size .3s, margin .3s;
+    }
+    .podcast-overlay.playing .podcast-icon { font-size: 32px; margin-bottom: 8px; }
     @keyframes podFloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
-    .podcast-title { font-size: 22px; font-weight: 800; color: #fff; text-align: center; margin-bottom: 6px; letter-spacing: -0.02em; }
-    .podcast-subtitle { font-size: 14px; color: rgba(255,255,255,.55); text-align: center; margin-bottom: 32px; }
+    .podcast-title {
+      font-size: 22px; font-weight: 800; color: #fff; text-align: center;
+      margin-bottom: 6px; letter-spacing: -0.02em;
+      transition: font-size .3s;
+    }
+    .podcast-overlay.playing .podcast-title { font-size: 15px; margin-bottom: 2px; }
+    .podcast-subtitle {
+      font-size: 14px; color: rgba(255,255,255,.55); text-align: center; margin-bottom: 28px;
+      transition: margin .3s, font-size .3s;
+    }
+    .podcast-overlay.playing .podcast-subtitle { font-size: 12px; margin-bottom: 16px; }
     .podcast-article-label {
       font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--accent); margin-bottom: 10px; min-height: 20px; text-align: center;
     }
     .podcast-sentence {
       font-size: 18px; font-weight: 500; color: rgba(255,255,255,.9);
-      text-align: center; line-height: 1.6; min-height: 80px;
-      max-width: 480px; margin-bottom: 32px;
+      text-align: center; line-height: 1.6; min-height: 60px;
+      max-width: 480px; margin-bottom: 20px;
       transition: opacity .3s;
     }
     .podcast-waveform {
-      display: flex; align-items: center; gap: 4px; height: 40px; margin-bottom: 28px;
+      display: flex; align-items: center; gap: 4px; height: 40px; margin-bottom: 16px;
     }
     .podcast-waveform span {
       display: block; width: 4px; border-radius: 2px;
@@ -749,7 +765,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.4.2</div>
+      <div class="login-footer">Morning Brief v1.5.0</div>
     </div>
   </div>
 
@@ -901,7 +917,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.4.2</div>
+      <div class="version-footer">Morning Brief v1.5.0</div>
     </div>
 
     <!-- Favoris -->
@@ -918,7 +934,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.4.2</div>
+      <div class="version-footer">Morning Brief v1.5.0</div>
     </div>
 
     <!-- Thèmes -->
@@ -935,7 +951,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.4.2</div>
+      <div class="version-footer">Morning Brief v1.5.0</div>
     </div>
 
     <!-- Profil -->
@@ -1012,7 +1028,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.4.2</div>
+      <div class="version-footer">Morning Brief v1.5.0</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1033,7 +1049,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.4.2</div>
+      <div class="version-footer">Morning Brief v1.5.0</div>
     </div>
 
     <!-- Nav -->
@@ -1059,7 +1075,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.4.2</div>
+      <div class="nav-version">Morning Brief v1.5.0</div>
     </nav>
   </div>
 </div>
@@ -1541,6 +1557,14 @@ window.addEventListener('load', async () => {
     if (!mainVisible) {
       dbg('reprise: écran intermédiaire, re-résolution navigation');
       _resolveNavigation();
+    }
+
+    // Podcast : si en cours et speechSynthesis tué par le verrouillage, relancer
+    if (_podScript.length > 0 && !_podPaused) {
+      if (!speechSynthesis.speaking && !speechSynthesis.pending) {
+        dbg('podcast: reprise après verrouillage écran, section', _podIdx);
+        podPlayFrom(_podIdx);
+      }
     }
   });
 });
@@ -2055,12 +2079,54 @@ let _podStartTime = null;
 let _podElapsedBefore = 0; // secondes avant la dernière pause
 let _podTimer = null;
 let _podSpeed = 1;
+let _podSilentAudio = null; // keep-alive iOS (WAV silencieux en boucle)
 const POD_DURATION = 300;  // 5 min en secondes
+
+// ─── Podcast keep-alive + Media Session ───────────────────
+// WAV 1 sample silence 8-bit mono 8kHz — maintient la session audio iOS active
+const _POD_SILENT_WAV = 'data:audio/wav;base64,UklGRiUAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQEAAACA';
+
+function _podStartKeepAlive() {
+  if (_podSilentAudio) return;
+  _podSilentAudio = new Audio(_POD_SILENT_WAV);
+  _podSilentAudio.loop = true;
+  _podSilentAudio.volume = 0.001;
+  _podSilentAudio.play().catch(() => {});
+}
+
+function _podStopKeepAlive() {
+  if (_podSilentAudio) {
+    _podSilentAudio.pause();
+    _podSilentAudio.src = '';
+    _podSilentAudio = null;
+  }
+}
+
+function _podSetupMediaSession() {
+  if (!('mediaSession' in navigator)) return;
+  const p = getActiveProfile();
+  const now = new Date();
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: 'Morning Brief Podcast',
+    artist: p?.name?.split(' ')[0] || 'Morning Brief',
+    album: `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`
+  });
+  navigator.mediaSession.setActionHandler('play', () => { if (_podPaused) podToggle(); });
+  navigator.mediaSession.setActionHandler('pause', () => { if (!_podPaused) podToggle(); });
+  navigator.mediaSession.setActionHandler('nexttrack', podSkip);
+  navigator.mediaSession.setActionHandler('previoustrack', podRestart);
+}
+
+function _podSetMediaState(playing) {
+  if ('mediaSession' in navigator)
+    navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
+}
 
 async function startPodcast() {
   if (!_lastArticles.length) { toast('Générez d\'abord un brief'); return; }
   stopReading();
   document.getElementById('podcast-overlay').classList.add('open');
+  document.getElementById('podcast-overlay').classList.remove('playing');
   document.getElementById('pod-generating').style.display = 'flex';
   document.getElementById('pod-player').style.display = 'none';
 
@@ -2071,6 +2137,9 @@ async function startPodcast() {
     _podStartTime = Date.now();
     document.getElementById('pod-generating').style.display = 'none';
     document.getElementById('pod-player').style.display = 'flex';
+    document.getElementById('podcast-overlay').classList.add('playing');
+    _podStartKeepAlive();
+    _podSetupMediaSession();
     startPodTimer();
     podPlayFrom(0);
   } catch(e) {
@@ -2157,16 +2226,23 @@ function podPlayFrom(idx) {
   speechSynthesis.speak(utt);
   document.getElementById('pod-waveform').classList.add('playing');
   document.getElementById('pod-playpause').textContent = '⏸';
+  _podSetMediaState(true);
 }
 
 function podToggle() {
   if (_podPaused) {
     _podPaused = false;
     _podStartTime = Date.now();
-    speechSynthesis.resume();
+    // iOS tue parfois speechSynthesis en arrière-plan → si plus rien, on relance
+    if (!speechSynthesis.speaking && !speechSynthesis.pending) {
+      podPlayFrom(_podIdx);
+    } else {
+      speechSynthesis.resume();
+    }
     document.getElementById('pod-waveform').classList.add('playing');
     document.getElementById('pod-playpause').textContent = '⏸';
     startPodTimer();
+    _podSetMediaState(true);
   } else {
     _podPaused = true;
     _podElapsedBefore += (Date.now() - _podStartTime) / 1000;
@@ -2174,6 +2250,7 @@ function podToggle() {
     document.getElementById('pod-waveform').classList.remove('playing');
     document.getElementById('pod-playpause').textContent = '▶';
     clearInterval(_podTimer);
+    _podSetMediaState(false);
   }
 }
 
@@ -2190,6 +2267,8 @@ function podRestart() {
 
 function podEnd() {
   speechSynthesis.cancel();
+  _podStopKeepAlive();
+  _podSetMediaState(false);
   document.getElementById('pod-waveform').classList.remove('playing');
   document.getElementById('pod-playpause').textContent = '▶';
   document.getElementById('pod-article-label').textContent = 'Terminé !';
@@ -2229,9 +2308,13 @@ function cycleSpeed() {
 
 function closePodcast() {
   speechSynthesis.cancel();
+  _podStopKeepAlive();
+  _podSetMediaState(false);
   clearInterval(_podTimer);
-  _podPaused = false; _podElapsedBefore = 0;
-  document.getElementById('podcast-overlay').classList.remove('open');
+  _podPaused = false; _podElapsedBefore = 0; _podScript = [];
+  const ov = document.getElementById('podcast-overlay');
+  ov.classList.remove('open');
+  ov.classList.remove('playing');
   document.getElementById('pod-generating').style.display = 'none';
   document.getElementById('pod-player').style.display = 'none';
   document.getElementById('pod-waveform').classList.remove('playing');
