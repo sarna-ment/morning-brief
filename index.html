@@ -765,7 +765,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.5.0</div>
+      <div class="login-footer">Morning Brief v1.5.1</div>
     </div>
   </div>
 
@@ -917,7 +917,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.5.0</div>
+      <div class="version-footer">Morning Brief v1.5.1</div>
     </div>
 
     <!-- Favoris -->
@@ -934,7 +934,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.5.0</div>
+      <div class="version-footer">Morning Brief v1.5.1</div>
     </div>
 
     <!-- Thèmes -->
@@ -951,7 +951,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.5.0</div>
+      <div class="version-footer">Morning Brief v1.5.1</div>
     </div>
 
     <!-- Profil -->
@@ -1028,7 +1028,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.5.0</div>
+      <div class="version-footer">Morning Brief v1.5.1</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1049,7 +1049,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.5.0</div>
+      <div class="version-footer">Morning Brief v1.5.1</div>
     </div>
 
     <!-- Nav -->
@@ -1075,7 +1075,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.5.0</div>
+      <div class="nav-version">Morning Brief v1.5.1</div>
     </nav>
   </div>
 </div>
@@ -1535,8 +1535,18 @@ window.addEventListener('load', async () => {
 
   // Reprise depuis l'arrière-plan (changement d'app, veille écran…)
   document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState !== 'visible') return;
+    // Passage en arrière-plan : pause explicite avant qu iOS tue speechSynthesis.
+    // Un speechSynthesis.pause() + resume() est plus fiable qu un restart complet.
+    if (document.visibilityState === 'hidden') {
+      if (_podScript.length > 0 && !_podPaused) speechSynthesis.pause();
+      return;
+    }
+
+    // Retour au premier plan
     if (!_authReady) return;
+
+    // Réactiver AudioContext si iOS l a suspendu
+    _podResumeAudioCtx();
 
     const { data: { session } } = await sb.auth.getSession();
 
@@ -1559,11 +1569,13 @@ window.addEventListener('load', async () => {
       _resolveNavigation();
     }
 
-    // Podcast : si en cours et speechSynthesis tué par le verrouillage, relancer
+    // Reprise du podcast après verrouillage/arrière-plan
     if (_podScript.length > 0 && !_podPaused) {
-      if (!speechSynthesis.speaking && !speechSynthesis.pending) {
-        dbg('podcast: reprise après verrouillage écran, section', _podIdx);
-        podPlayFrom(_podIdx);
+      if (speechSynthesis.paused) {
+        speechSynthesis.resume();     // pause gracieuse réussie — reprend exactement là où on était
+      } else if (!speechSynthesis.speaking && !speechSynthesis.pending) {
+        dbg('podcast: iOS a tué speechSynthesis, relance section', _podIdx);
+        podPlayFrom(_podIdx);         // iOS l a tué malgré tout — on relance la section
       }
     }
   });
@@ -2079,27 +2091,46 @@ let _podStartTime = null;
 let _podElapsedBefore = 0; // secondes avant la dernière pause
 let _podTimer = null;
 let _podSpeed = 1;
-let _podSilentAudio = null; // keep-alive iOS (WAV silencieux en boucle)
-const POD_DURATION = 300;  // 5 min en secondes
+let _podAudioCtx = null;       // AudioContext keep-alive iOS
+let _podKeepAliveNode = null;  // BufferSourceNode en cours
+const POD_DURATION = 300;      // 5 min en secondes
 
 // ─── Podcast keep-alive + Media Session ───────────────────
-// WAV 1 sample silence 8-bit mono 8kHz — maintient la session audio iOS active
-const _POD_SILENT_WAV = 'data:audio/wav;base64,UklGRiUAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQEAAACA';
+// AudioContext avec bruit blanc -86 dB en boucle : iOS le considere comme
+// de l audio actif et maintient la session, ce que le WAV 45 octets ne garantit pas.
 
 function _podStartKeepAlive() {
-  if (_podSilentAudio) return;
-  _podSilentAudio = new Audio(_POD_SILENT_WAV);
-  _podSilentAudio.loop = true;
-  _podSilentAudio.volume = 0.001;
-  _podSilentAudio.play().catch(() => {});
+  if (_podAudioCtx) return;
+  try {
+    _podAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const sr   = _podAudioCtx.sampleRate;
+    const buf  = _podAudioCtx.createBuffer(1, sr * 2, sr);
+    const ch   = buf.getChannelData(0);
+    for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() - 0.5) * 0.0002;
+    const gain = _podAudioCtx.createGain();
+    gain.gain.value = 0.01;
+    gain.connect(_podAudioCtx.destination);
+    function loop() {
+      if (!_podAudioCtx) return;
+      const src = _podAudioCtx.createBufferSource();
+      src.buffer = buf;
+      src.connect(gain);
+      src.onended = loop;
+      src.start();
+      _podKeepAliveNode = src;
+    }
+    loop();
+  } catch(e) { dbg('keep-alive AudioContext impossible:', e); }
 }
 
 function _podStopKeepAlive() {
-  if (_podSilentAudio) {
-    _podSilentAudio.pause();
-    _podSilentAudio.src = '';
-    _podSilentAudio = null;
-  }
+  if (_podKeepAliveNode) { try { _podKeepAliveNode.stop(); } catch(e) {} _podKeepAliveNode = null; }
+  if (_podAudioCtx) { _podAudioCtx.close().catch(() => {}); _podAudioCtx = null; }
+}
+
+function _podResumeAudioCtx() {
+  if (_podAudioCtx && _podAudioCtx.state === 'suspended')
+    _podAudioCtx.resume().catch(() => {});
 }
 
 function _podSetupMediaSession() {
@@ -2111,7 +2142,12 @@ function _podSetupMediaSession() {
     artist: p?.name?.split(' ')[0] || 'Morning Brief',
     album: `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`
   });
-  navigator.mediaSession.setActionHandler('play', () => { if (_podPaused) podToggle(); });
+  navigator.mediaSession.setActionHandler('play', () => {
+    if (_podPaused) { podToggle(); return; }
+    // iOS a tué speechSynthesis mais l app pense encore etre en lecture
+    if (!speechSynthesis.speaking && !speechSynthesis.pending)
+      podPlayFrom(_podIdx); // geste utilisateur => autorisé par iOS
+  });
   navigator.mediaSession.setActionHandler('pause', () => { if (!_podPaused) podToggle(); });
   navigator.mediaSession.setActionHandler('nexttrack', podSkip);
   navigator.mediaSession.setActionHandler('previoustrack', podRestart);
