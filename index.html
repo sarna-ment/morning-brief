@@ -800,7 +800,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.6.7</div>
+      <div class="login-footer">Morning Brief v1.7.0</div>
     </div>
   </div>
 
@@ -952,7 +952,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.6.7</div>
+      <div class="version-footer">Morning Brief v1.7.0</div>
     </div>
 
     <!-- Favoris -->
@@ -969,7 +969,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.6.7</div>
+      <div class="version-footer">Morning Brief v1.7.0</div>
     </div>
 
     <!-- Thèmes -->
@@ -986,7 +986,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.6.7</div>
+      <div class="version-footer">Morning Brief v1.7.0</div>
     </div>
 
     <!-- Profil -->
@@ -1081,7 +1081,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.6.7</div>
+      <div class="version-footer">Morning Brief v1.7.0</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1102,7 +1102,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.6.7</div>
+      <div class="version-footer">Morning Brief v1.7.0</div>
     </div>
 
     <!-- Nav -->
@@ -1128,7 +1128,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.6.7</div>
+      <div class="nav-version">Morning Brief v1.7.0</div>
     </nav>
   </div>
 </div>
@@ -1322,6 +1322,10 @@ async function submitPin() {
   }
   localStorage.setItem('mb_apikey_' + p.id, apikey);
   _profiles = _profiles.map(pp => pp.id === p.id ? { ...pp, apikey } : pp);
+  if (p.encrypted_el_key) {
+    const elKey = await decryptWithPin(p.encrypted_el_key, pin);
+    if (elKey) localStorage.setItem('mb_el_key_' + p.id, elKey);
+  }
   hidePinModal(); showMainApp(); initApp();
 }
 function pinForgot() { hidePinModal(); showSetupScreen('returning'); }
@@ -2870,33 +2874,35 @@ async function saveProfile() {
   if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
   try {
     const { apikey: _drop, ...current } = _profiles[idx];
-    const newPin = (document.getElementById('profil-pin')?.value || '').trim();
+    const newPin    = (document.getElementById('profil-pin')?.value || '').trim();
     const newApikey = key || _profiles[idx].apikey;
+
+    // Clé Anthropic chiffrée
     let encryptedKey = current.encrypted_apikey || null;
-    if (newPin.length === 4 && newApikey) {
-      encryptedKey = await encryptWithPin(newApikey, newPin);
-    }
+    if (newPin.length === 4 && newApikey) encryptedKey = await encryptWithPin(newApikey, newPin);
+
+    // Clé ElevenLabs
+    const elKeyRaw = (document.getElementById('el-apikey')?.value || '').trim();
+    const newElKey = (elKeyRaw && elKeyRaw !== '●●●●●●●●') ? elKeyRaw : getElKey();
+    let encryptedElKey = current.encrypted_el_key || null;
+    if (newPin.length === 4 && newElKey) encryptedElKey = await encryptWithPin(newElKey, newPin);
+
     const updated = {
       ...current,
-      name: document.getElementById('profil-name').value.trim() || current.name,
-      role: document.getElementById('profil-role').value.trim(),
-      context: document.getElementById('profil-context').value.trim(),
-      goal: document.getElementById('profil-goal').value.trim(),
-      style: document.getElementById('profil-style').value,
-      encrypted_apikey: encryptedKey,
+      name:              document.getElementById('profil-name').value.trim() || current.name,
+      role:              document.getElementById('profil-role').value.trim(),
+      context:           document.getElementById('profil-context').value.trim(),
+      goal:              document.getElementById('profil-goal').value.trim(),
+      style:             document.getElementById('profil-style').value,
+      encrypted_apikey:  encryptedKey,
+      encrypted_el_key:  encryptedElKey,
     };
     const { error } = await sb.from('profiles').upsert({ ...updated, user_id: _sbUser.id }, { onConflict: 'id' });
     if (error) throw error;
     if (newApikey) localStorage.setItem('mb_apikey_' + updated.id, newApikey);
-    const elKeyRaw = (document.getElementById('el-apikey')?.value || '').trim();
-    if (elKeyRaw && elKeyRaw !== '●●●●●●●●') setElKey(elKeyRaw);
-    else if (!elKeyRaw) setElKey('');
+    if (newElKey)  localStorage.setItem('mb_el_key_' + updated.id, newElKey);
     const elVoiceVal = document.getElementById('el-voice')?.value;
     if (elVoiceVal) setElVoice(elVoiceVal);
-    const elLang = document.getElementById('el-lang')?.value;
-    if (elLang !== undefined) localStorage.setItem('mb_el_lang', elLang);
-    const elCountry = document.getElementById('el-country')?.value;
-    if (elCountry !== undefined) localStorage.setItem('mb_el_country', elCountry);
     _profiles[idx] = { ...updated, apikey: newApikey };
     renderProfileSwitcher(); renderProfilePills();
     const msg = newPin.length === 4 ? 'Profil enregistré · PIN mis à jour 🔐' : 'Profil enregistré ✓';
