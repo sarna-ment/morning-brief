@@ -800,7 +800,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.7.5</div>
+      <div class="login-footer">Morning Brief v1.7.6</div>
     </div>
   </div>
 
@@ -952,7 +952,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.7.5</div>
+      <div class="version-footer">Morning Brief v1.7.6</div>
     </div>
 
     <!-- Favoris -->
@@ -969,7 +969,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.7.5</div>
+      <div class="version-footer">Morning Brief v1.7.6</div>
     </div>
 
     <!-- Thèmes -->
@@ -986,7 +986,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.7.5</div>
+      <div class="version-footer">Morning Brief v1.7.6</div>
     </div>
 
     <!-- Profil -->
@@ -1084,7 +1084,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.7.5</div>
+      <div class="version-footer">Morning Brief v1.7.6</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1105,7 +1105,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.7.5</div>
+      <div class="version-footer">Morning Brief v1.7.6</div>
     </div>
 
     <!-- Nav -->
@@ -1131,7 +1131,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.7.5</div>
+      <div class="nav-version">Morning Brief v1.7.6</div>
     </nav>
   </div>
 </div>
@@ -1379,6 +1379,13 @@ async function loadAllData() {
     const { data: settings } = await sb.from('user_settings').select('*').eq('user_id', _sbUser.id).maybeSingle();
     _activeProfileId = settings?.active_profile_id || _profiles[0]?.id || '';
     _theme = settings?.theme || 'coral';
+    // Charger la clé EL depuis Supabase -> localStorage + cache profils
+    if (settings?.el_key) {
+      _profiles = _profiles.map(p => {
+        localStorage.setItem('mb_el_key_' + p.id, settings.el_key);
+        return { ...p, el_key: settings.el_key };
+      });
+    }
     await reloadHistory();
     await reloadFavorites();
     await reloadFeedback();
@@ -2279,6 +2286,10 @@ function setElKey(k, profileId) {
   const lk = 'mb_el_key_' + pid;
   k ? localStorage.setItem(lk, k) : localStorage.removeItem(lk);
   _profiles = _profiles.map(p => p.id === pid ? { ...p, el_key: k || '' } : p);
+  if (_sbUser && k) sb.from('user_settings').upsert(
+    { user_id: _sbUser.id, active_profile_id: _activeProfileId, theme: _theme, el_key: k },
+    { onConflict: 'user_id' }
+  ).then();
 }
 function getElVoice()  { return localStorage.getItem('mb_el_voice_' + _activeProfileId) || 'ecxPjiGTvAfpGEams6ec'; }
 function setElVoice(v) { localStorage.setItem('mb_el_voice_' + _activeProfileId, v); }
@@ -2910,7 +2921,14 @@ async function saveProfile() {
     const { error } = await sb.from('profiles').upsert({ ...updated, user_id: _sbUser.id }, { onConflict: 'id' });
     if (error) throw error;
     if (newApikey) localStorage.setItem('mb_apikey_' + updated.id, newApikey);
-    if (newElKey)  { localStorage.setItem('mb_el_key_' + updated.id, newElKey); }
+    if (newElKey) {
+      localStorage.setItem('mb_el_key_' + updated.id, newElKey);
+      // Sauvegarde cross-device dans user_settings
+      sb.from('user_settings').upsert(
+        { user_id: _sbUser.id, active_profile_id: _activeProfileId, theme: _theme, el_key: newElKey },
+        { onConflict: 'user_id' }
+      ).then();
+    }
     const elVoiceVal = document.getElementById('el-voice')?.value;
     if (elVoiceVal) setElVoice(elVoiceVal);
     _profiles[idx] = { ...updated, apikey: newApikey, el_key: newElKey };
