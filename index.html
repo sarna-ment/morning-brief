@@ -800,7 +800,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.7.4</div>
+      <div class="login-footer">Morning Brief v1.7.5</div>
     </div>
   </div>
 
@@ -952,7 +952,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.7.4</div>
+      <div class="version-footer">Morning Brief v1.7.5</div>
     </div>
 
     <!-- Favoris -->
@@ -969,7 +969,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.7.4</div>
+      <div class="version-footer">Morning Brief v1.7.5</div>
     </div>
 
     <!-- Thèmes -->
@@ -986,7 +986,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.7.4</div>
+      <div class="version-footer">Morning Brief v1.7.5</div>
     </div>
 
     <!-- Profil -->
@@ -1049,10 +1049,12 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Voix</label>
+          <label>Voix <span style="font-weight:400;font-size:12px;">(noms chargés après Tester)</span></label>
           <select id="el-voice">
-            <option value="21m00Tcm4TlvDq8ikWAM">Rachel — Femme</option>
-            <option value="pNInz6obpgDQGcFmaJgB">Adam — Homme</option>
+            <option value="ecxPjiGTvAfpGEams6ec">Voix 1…</option>
+            <option value="WeAAwKYcS06VmXw086yZ">Voix 2…</option>
+            <option value="WvErJnWn6OcGO9sG2kqK">Voix 3…</option>
+            <option value="n1u6R6yj3qEpDLH3liBh">Voix 4…</option>
           </select>
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:4px;">Sans clé : voix synthétique du navigateur. Avec clé : voix humaine naturelle — et les coupures iOS disparaissent.</div>
@@ -1082,7 +1084,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.7.4</div>
+      <div class="version-footer">Morning Brief v1.7.5</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1103,7 +1105,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.7.4</div>
+      <div class="version-footer">Morning Brief v1.7.5</div>
     </div>
 
     <!-- Nav -->
@@ -1129,7 +1131,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.7.4</div>
+      <div class="nav-version">Morning Brief v1.7.5</div>
     </nav>
   </div>
 </div>
@@ -2278,7 +2280,7 @@ function setElKey(k, profileId) {
   k ? localStorage.setItem(lk, k) : localStorage.removeItem(lk);
   _profiles = _profiles.map(p => p.id === pid ? { ...p, el_key: k || '' } : p);
 }
-function getElVoice()  { return localStorage.getItem('mb_el_voice_' + _activeProfileId) || '21m00Tcm4TlvDq8ikWAM'; }
+function getElVoice()  { return localStorage.getItem('mb_el_voice_' + _activeProfileId) || 'ecxPjiGTvAfpGEams6ec'; }
 function setElVoice(v) { localStorage.setItem('mb_el_voice_' + _activeProfileId, v); }
 
 function _podShowError(title, msg) {
@@ -2329,6 +2331,37 @@ async function _elTTS(text) {
   return { url: URL.createObjectURL(blob), blob };
 }
 
+
+// 4 voix françaises sélectionnées — noms récupérés depuis /v1/voices
+const _EL_VOICE_IDS = [
+  'ecxPjiGTvAfpGEams6ec',
+  'WeAAwKYcS06VmXw086yZ',
+  'WvErJnWn6OcGO9sG2kqK',
+  'n1u6R6yj3qEpDLH3liBh'
+];
+
+async function _elLoadVoices(key) {
+  try {
+    const res = await fetch('https://api.elevenlabs.io/v1/voices', {
+      headers: { 'xi-api-key': key }
+    });
+    if (!res.ok) return;
+    const all = (await res.json()).voices || [];
+    const sel = document.getElementById('el-voice');
+    if (!sel) return;
+    const prev = sel.value || getElVoice();
+    const glyph = { male: '♂', female: '♀' };
+    sel.innerHTML = _EL_VOICE_IDS.map(id => {
+      const v = all.find(x => x.voice_id === id);
+      const name = v ? v.name : id.slice(0, 8) + '…';
+      const g = v ? (glyph[v.labels?.gender] || '') : '';
+      return `<option value="${id}">${name}${g ? ' ' + g : ''}</option>`;
+    }).join('');
+    if (sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
+    dbg('Voix chargées:', all.filter(v => _EL_VOICE_IDS.includes(v.voice_id)).map(v => v.name));
+  } catch(e) { dbg('_elLoadVoices error', e); }
+}
+
 async function testElKey() {
   const inp = document.getElementById('el-apikey');
   const key = inp?.value?.trim() || getElKey();
@@ -2343,6 +2376,7 @@ async function testElKey() {
     const d = await res.json();
     const left = (d.character_limit - d.character_count).toLocaleString('fr-FR');
     toast(`✓ Clé valide · ${left} caractères restants`, 4000);
+    await _elLoadVoices(key);
   } catch(e) {
     toast('✗ ' + e.message, 4000);
   } finally {
@@ -2834,6 +2868,7 @@ function renderProfile() {
   if (elKeyInput) elKeyInput.value = p.el_key || '';
   const elVoiceSel = document.getElementById('el-voice');
   if (elVoiceSel) elVoiceSel.value = getElVoice();
+  if (getElKey()) _elLoadVoices(getElKey()).catch(() => {});
   // Charge les voix réelles du compte EL (fire-and-forget, restaure la sélection)
   const pinStatus = document.getElementById('profil-pin-status');
   if (pinStatus) pinStatus.textContent = p.encrypted_apikey ? '🔐 PIN actif — clé synchronisée sur vos appareils.' : '⚠️ Aucun PIN — clé stockée uniquement sur cet appareil.';
