@@ -499,6 +499,41 @@
       border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite;
     }
 
+    /* ─── Podcast bibliothèque ──────────────────────────── */
+    .pod-lib-list {
+      width: 100%; display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 16px; max-height: 42vh; overflow-y: auto;
+    }
+    .pod-lib-item {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(255,255,255,.08); border-radius: 12px; padding: 12px 14px;
+    }
+    .pod-lib-info { flex: 1; min-width: 0; }
+    .pod-lib-date { font-size: 14px; font-weight: 700; color: #fff; }
+    .pod-lib-tags {
+      font-size: 11px; color: rgba(255,255,255,.5); margin-top: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pod-lib-audio { font-size: 10px; font-weight: 600; letter-spacing: .05em;
+      background: rgba(255,180,100,.15); color: rgba(255,200,130,.9);
+      border-radius: 5px; padding: 2px 6px; margin-left: 6px; }
+    .pod-lib-play {
+      width: 38px; height: 38px; border-radius: 50%; border: none; flex-shrink: 0;
+      background: rgba(255,255,255,.15); color: #fff; font-size: 15px; cursor: pointer;
+    }
+    .pod-lib-del {
+      width: 28px; height: 28px; border-radius: 50%; border: none; flex-shrink: 0;
+      background: rgba(255,80,80,.12); color: rgba(255,120,120,.8); font-size: 13px; cursor: pointer;
+    }
+    .pod-new-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 14px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.06); color: rgba(255,255,255,.85);
+      font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s;
+    }
+    .pod-new-btn:hover { background: rgba(255,255,255,.12); }
+    .pod-empty { text-align: center; color: rgba(255,255,255,.35); font-size: 14px; padding: 24px 0; }
+
     /* ─── Sélecteur de thème ────────────────────────────── */
     .theme-picker { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
     .theme-swatch {
@@ -765,7 +800,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.6.0</div>
+      <div class="login-footer">Morning Brief v1.6.1</div>
     </div>
   </div>
 
@@ -871,7 +906,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
           Écouter
         </button>
-        <button class="btn-secondary" id="btn-podcast" onclick="startPodcast()" style="display:none;">
+        <button class="btn-secondary" id="btn-podcast" onclick="openPodcastOverlay()" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
           Podcast
         </button>
@@ -917,7 +952,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.6.0</div>
+      <div class="version-footer">Morning Brief v1.6.1</div>
     </div>
 
     <!-- Favoris -->
@@ -934,7 +969,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.6.0</div>
+      <div class="version-footer">Morning Brief v1.6.1</div>
     </div>
 
     <!-- Thèmes -->
@@ -951,7 +986,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.6.0</div>
+      <div class="version-footer">Morning Brief v1.6.1</div>
     </div>
 
     <!-- Profil -->
@@ -1050,7 +1085,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.6.0</div>
+      <div class="version-footer">Morning Brief v1.6.1</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1071,7 +1106,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.6.0</div>
+      <div class="version-footer">Morning Brief v1.6.1</div>
     </div>
 
     <!-- Nav -->
@@ -1097,7 +1132,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.6.0</div>
+      <div class="nav-version">Morning Brief v1.6.1</div>
     </nav>
   </div>
 </div>
@@ -1125,6 +1160,15 @@
   <div class="podcast-icon">🎙️</div>
   <div class="podcast-title">Morning Brief Podcast</div>
   <div class="podcast-subtitle" id="pod-subtitle">5 articles · 5 minutes</div>
+
+  <!-- Bibliothèque : podcasts sauvegardés + bouton nouveau -->
+  <div id="pod-library" style="width:100%;max-width:480px;display:none;">
+    <div id="pod-lib-list" class="pod-lib-list"></div>
+    <button class="pod-new-btn" onclick="startPodcast()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+      Générer un nouveau podcast
+    </button>
+  </div>
 
   <audio id="pod-audio" playsinline></audio>
   <div id="pod-generating" class="podcast-generating" style="display:none;">
@@ -2152,7 +2196,69 @@ let _podSpeed = 1;
 let _podAudioCtx = null;       // AudioContext keep-alive iOS (fallback speechSynthesis)
 let _podKeepAliveNode = null;  // BufferSourceNode en cours
 let _podAudioUrls = [];        // blob URLs ElevenLabs par section (vide = speechSynthesis)
+let _podAudioBlobs = [];       // Blob bruts pour sauvegarde IndexedDB
 const POD_DURATION = 300;      // 5 min en secondes
+
+// ─── Podcast IndexedDB ────────────────────────────────────
+let _podDB = null;
+async function _podDBOpen() {
+  if (_podDB) return _podDB;
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('morning-brief-pods', 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('podcasts')) {
+        const s = db.createObjectStore('podcasts', { keyPath: 'id' });
+        s.createIndex('profileId', 'profileId');
+      }
+    };
+    req.onsuccess = e => { _podDB = e.target.result; resolve(_podDB); };
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+async function _podDBSave(script, blobs) {
+  const db = await _podDBOpen();
+  const now = new Date();
+  const id  = `${_activeProfileId}_${now.toISOString()}`;
+  const rec = {
+    id, profileId: _activeProfileId,
+    date: now.toISOString(),
+    label: `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`,
+    articles: (_lastArticles || []).map(a => ({ tag: a.tag, titre: a.titre })),
+    script,
+    blobs: blobs.length ? blobs : null,
+    hasAudio: blobs.length > 0
+  };
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('podcasts', 'readwrite');
+    tx.objectStore('podcasts').put(rec);
+    tx.oncomplete = () => resolve(id);
+    tx.onerror    = e => reject(e.target.error);
+  });
+}
+
+async function _podDBLoad() {
+  const db = await _podDBOpen();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction('podcasts', 'readonly');
+    const req = tx.objectStore('podcasts').index('profileId').getAll(_activeProfileId);
+    req.onsuccess = e => resolve(
+      (e.target.result || []).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 15)
+    );
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function _podDBDelete(id) {
+  const db = await _podDBOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('podcasts', 'readwrite');
+    tx.objectStore('podcasts').delete(id);
+    tx.oncomplete = resolve;
+    tx.onerror    = e => reject(e.target.error);
+  });
+}
 
 // ─── ElevenLabs TTS ───────────────────────────────────────
 function getElKey()    { return localStorage.getItem('mb_el_key') || ''; }
@@ -2174,7 +2280,8 @@ async function _elTTS(text) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail?.message || `ElevenLabs ${res.status}`);
   }
-  return URL.createObjectURL(await res.blob());
+  const blob = await res.blob();
+  return { url: URL.createObjectURL(blob), blob };
 }
 
 // ─── Podcast keep-alive + Media Session ───────────────────
@@ -2244,14 +2351,76 @@ function _podSetMediaState(playing) {
     navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
 }
 
+async function openPodcastOverlay() {
+  stopReading();
+  document.getElementById('podcast-overlay').classList.add('open');
+  document.getElementById('podcast-overlay').classList.remove('playing');
+  document.getElementById('pod-generating').style.display = 'none';
+  document.getElementById('pod-player').style.display = 'none';
+  document.getElementById('pod-library').style.display = 'block';
+  await renderPodLibrary();
+}
+
+async function renderPodLibrary() {
+  const list = document.getElementById('pod-lib-list');
+  if (!list) return;
+  list.innerHTML = '';
+  let pods = [];
+  try { pods = await _podDBLoad(); } catch(e) { dbg('podDBLoad error', e); }
+  if (!pods.length) {
+    list.innerHTML = '<div class="pod-empty">Aucun podcast sauvegardé<br><span style="font-size:12px;">Générez votre premier podcast ci-dessous</span></div>';
+    return;
+  }
+  pods.forEach(pod => {
+    const tags = pod.articles.map(a => a.tag).join(' · ');
+    const audioBadge = pod.hasAudio ? '<span class="pod-lib-audio">🔊 Audio</span>' : '';
+    const el = document.createElement('div');
+    el.className = 'pod-lib-item';
+    el.innerHTML = `
+      <div class="pod-lib-info">
+        <div class="pod-lib-date">${pod.label}${audioBadge}</div>
+        <div class="pod-lib-tags">${tags}</div>
+      </div>
+      <button class="pod-lib-play" title="Écouter">▶</button>
+      <button class="pod-lib-del" title="Supprimer">🗑</button>`;
+    el.querySelector('.pod-lib-play').onclick = () => playSavedPodcast(pod);
+    el.querySelector('.pod-lib-del').onclick = async e => {
+      e.stopPropagation();
+      await _podDBDelete(pod.id).catch(() => {});
+      await renderPodLibrary();
+    };
+    list.appendChild(el);
+  });
+}
+
+async function playSavedPodcast(pod) {
+  stopReading();
+  _podScript = pod.script;
+  _podIdx = 0; _podPaused = false; _podElapsedBefore = 0;
+  _podAudioUrls.forEach(u => URL.revokeObjectURL(u));
+  _podAudioUrls = []; _podAudioBlobs = [];
+  if (pod.hasAudio && pod.blobs) {
+    pod.blobs.forEach(b => _podAudioUrls.push(URL.createObjectURL(b)));
+  }
+  _podStartTime = Date.now();
+  document.getElementById('pod-library').style.display = 'none';
+  document.getElementById('pod-player').style.display = 'flex';
+  document.getElementById('podcast-overlay').classList.add('playing');
+  if (!pod.hasAudio) _podStartKeepAlive();
+  _podSetupMediaSession();
+  startPodTimer();
+  podPlayFrom(0);
+}
+
 async function startPodcast() {
   if (!_lastArticles.length) { toast('Générez d\'abord un brief'); return; }
   stopReading();
   document.getElementById('podcast-overlay').classList.add('open');
   document.getElementById('podcast-overlay').classList.remove('playing');
+  document.getElementById('pod-library').style.display = 'none';
   document.getElementById('pod-generating').style.display = 'flex';
   document.getElementById('pod-player').style.display = 'none';
-  _podAudioUrls = [];
+  _podAudioUrls = []; _podAudioBlobs = [];
 
   try {
     const genLabel = document.getElementById('pod-gen-label');
@@ -2264,22 +2433,28 @@ async function startPodcast() {
     if (elKey) {
       for (let i = 0; i < script.length; i++) {
         if (genLabel) genLabel.textContent = `🎙 Génération vocale… ${i + 1}/${script.length}`;
-        _podAudioUrls.push(await _elTTS(script[i].text));
+        const { url, blob } = await _elTTS(script[i].text);
+        _podAudioUrls.push(url);
+        _podAudioBlobs.push(blob);
       }
     }
 
+    // Sauvegarde silencieuse en IndexedDB (ne bloque pas la lecture)
+    _podDBSave(script, _podAudioBlobs).catch(e => dbg('podDBSave error:', e));
+
     _podStartTime = Date.now();
     document.getElementById('pod-generating').style.display = 'none';
+    document.getElementById('pod-library').style.display = 'none';
     document.getElementById('pod-player').style.display = 'flex';
     document.getElementById('podcast-overlay').classList.add('playing');
-    if (!elKey) _podStartKeepAlive(); // keep-alive AudioContext uniquement en mode speechSynthesis
+    if (!elKey) _podStartKeepAlive();
     _podSetupMediaSession();
     startPodTimer();
     podPlayFrom(0);
   } catch(e) {
     document.getElementById('pod-generating').style.display = 'none';
+    document.getElementById('pod-library').style.display = 'block';
     toast('Erreur : ' + e.message, 4000);
-    closePodcast();
   }
 }
 
@@ -2463,7 +2638,7 @@ function closePodcast() {
   const audio = document.getElementById('pod-audio');
   audio.pause(); audio.src = '';
   _podAudioUrls.forEach(u => URL.revokeObjectURL(u));
-  _podAudioUrls = [];
+  _podAudioUrls = []; _podAudioBlobs = [];
   speechSynthesis.cancel();
   _podStopKeepAlive();
   _podSetMediaState(false);
@@ -2474,6 +2649,7 @@ function closePodcast() {
   ov.classList.remove('playing');
   document.getElementById('pod-generating').style.display = 'none';
   document.getElementById('pod-player').style.display = 'none';
+  document.getElementById('pod-library').style.display = 'none';
   document.getElementById('pod-waveform').classList.remove('playing');
 }
 
