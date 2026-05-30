@@ -800,7 +800,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.6.3</div>
+      <div class="login-footer">Morning Brief v1.6.4</div>
     </div>
   </div>
 
@@ -952,7 +952,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.6.3</div>
+      <div class="version-footer">Morning Brief v1.6.4</div>
     </div>
 
     <!-- Favoris -->
@@ -969,7 +969,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.6.3</div>
+      <div class="version-footer">Morning Brief v1.6.4</div>
     </div>
 
     <!-- Thèmes -->
@@ -986,7 +986,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.6.3</div>
+      <div class="version-footer">Morning Brief v1.6.4</div>
     </div>
 
     <!-- Profil -->
@@ -1049,19 +1049,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Langue</label>
-          <select id="el-lang" onchange="filterElCountries()">
-            <option value="">— testez d'abord la clé —</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Pays / Accent</label>
-          <select id="el-country" onchange="filterElVoices()">
-            <option value="">— tous les accents —</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Voix</label>
+          <label>Voix <span style="font-weight:400;font-size:12px;">(cliquez Tester pour charger les voix françaises)</span></label>
           <select id="el-voice">
             <option value="pNInz6obpgDQGcFmaJgB">Adam</option>
           </select>
@@ -1093,7 +1081,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.6.3</div>
+      <div class="version-footer">Morning Brief v1.6.4</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1114,7 +1102,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.6.3</div>
+      <div class="version-footer">Morning Brief v1.6.4</div>
     </div>
 
     <!-- Nav -->
@@ -1140,7 +1128,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.6.3</div>
+      <div class="nav-version">Morning Brief v1.6.4</div>
     </nav>
   </div>
 </div>
@@ -2321,98 +2309,27 @@ async function testElKey() {
   }
 }
 
-let _elVoicesAll = [];
-const _EL_LANG = {
-  en:'Anglais', fr:'Français', es:'Espagnol', de:'Allemand', it:'Italien',
-  pt:'Portugais', nl:'Néerlandais', pl:'Polonais', ru:'Russe', ja:'Japonais',
-  zh:'Chinois', ar:'Arabe', ko:'Coréen', hi:'Hindi', tr:'Turc', sv:'Suédois',
-  da:'Danois', fi:'Finnois', nb:'Norvégien', cs:'Tchèque', ro:'Roumain',
-  hu:'Hongrois', uk:'Ukrainien', id:'Indonésien', ms:'Malais'
-};
-const _EL_ACCENT = {
-  american:'États-Unis', british:'Royaume-Uni', australian:'Australie',
-  irish:'Irlande', canadian:'Canada', scottish:'Écosse', welsh:'Pays de Galles',
-  'south african':'Afrique du Sud', 'new zealand':'Nouvelle-Zélande',
-  indian:'Inde', french:'France', german:'Allemagne', italian:'Italie',
-  spanish:'Espagne', portuguese:'Portugal', brazilian:'Brésil', mexican:'Mexique',
-  swedish:'Suède', norwegian:'Norvège', danish:'Danemark', dutch:'Pays-Bas',
-  polish:'Pologne', czech:'Tchéquie', romanian:'Roumanie'
-};
-
-function _elInferLang(v) {
-  if (v.labels?.language) return v.labels.language.toLowerCase().slice(0, 2);
-  const a = (v.labels?.accent || '').toLowerCase();
-  if (['american','british','australian','irish','canadian','scottish','welsh','south african','new zealand'].includes(a)) return 'en';
-  if (a === 'french') return 'fr';
-  if (['german','austrian'].includes(a)) return 'de';
-  if (a === 'italian') return 'it';
-  if (['spanish','mexican'].includes(a)) return 'es';
-  if (['portuguese','brazilian'].includes(a)) return 'pt';
-  if (a === 'dutch') return 'nl';
-  if (a === 'swedish') return 'sv';
-  if (a === 'norwegian') return 'nb';
-  if (a === 'danish') return 'da';
-  if (a === 'polish') return 'pl';
-  return '';
-}
-
 async function _elLoadVoices(key) {
   try {
-    const res = await fetch('https://api.elevenlabs.io/v1/voices', {
+    // Bibliotheque publique ElevenLabs filtree sur le francais
+    const res = await fetch('https://api.elevenlabs.io/v1/shared-voices?language=fr&page_size=100', {
       headers: { 'xi-api-key': key }
     });
     if (!res.ok) return;
-    _elVoicesAll = (await res.json()).voices || [];
-
-    const langs = [...new Set(_elVoicesAll.map(_elInferLang).filter(Boolean))].sort();
-    const langSel = document.getElementById('el-lang');
-    if (!langSel) return;
-    const prevLang = localStorage.getItem('mb_el_lang') || '';
-    langSel.innerHTML = '<option value=>— toutes les langues —</option>' +
-      langs.map(l => `<option value="${l}">${_EL_LANG[l] || l}</option>`).join('');
-    if (prevLang && langSel.querySelector(`option[value="${prevLang}"]`)) langSel.value = prevLang;
-
-    filterElCountries();
+    const voices = (await res.json()).voices || [];
+    const sel = document.getElementById('el-voice');
+    if (!sel) return;
+    const prev = sel.value || getElVoice();
+    const glyph = { male:'♭', female:'♀' };
+    sel.innerHTML = voices
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(v => {
+        const g = glyph[v.labels?.gender] || '';
+        return `<option value="${v.voice_id}">${v.name}${g ? ' ' + g : ''}</option>`;
+      }).join('');
+    if (sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
+    dbg('Voix françaises chargées:', voices.length);
   } catch(e) { dbg('_elLoadVoices error', e); }
-}
-
-function filterElCountries() {
-  const lang = document.getElementById('el-lang')?.value || '';
-  if (lang) localStorage.setItem('mb_el_lang', lang);
-
-  const voices = lang ? _elVoicesAll.filter(v => _elInferLang(v) === lang) : _elVoicesAll;
-  const accents = [...new Set(voices.map(v => (v.labels?.accent || '').toLowerCase()).filter(Boolean))].sort();
-
-  const countrySel = document.getElementById('el-country');
-  if (!countrySel) return;
-  const prevCountry = localStorage.getItem('mb_el_country') || '';
-  countrySel.innerHTML = '<option value=>— tous les accents —</option>' +
-    accents.map(a => `<option value="${a}">${_EL_ACCENT[a] || a}</option>`).join('');
-  if (prevCountry && countrySel.querySelector(`option[value="${prevCountry}"]`)) countrySel.value = prevCountry;
-
-  filterElVoices();
-}
-
-function filterElVoices() {
-  const lang    = document.getElementById('el-lang')?.value    || '';
-  const country = document.getElementById('el-country')?.value || '';
-  if (country) localStorage.setItem('mb_el_country', country);
-
-  let voices = _elVoicesAll;
-  if (lang)    voices = voices.filter(v => _elInferLang(v) === lang);
-  if (country) voices = voices.filter(v => (v.labels?.accent || '').toLowerCase() === country);
-
-  const sel = document.getElementById('el-voice');
-  if (!sel) return;
-  const prev = sel.value || getElVoice();
-  const glyph = { male:'♂', female:'♀' };
-  sel.innerHTML = voices
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map(v => {
-      const g = glyph[v.labels?.gender] || '';
-      return `<option value="${v.voice_id}">${v.name}${g ? ' ' + g : ''}</option>`;
-    }).join('');
-  if (sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
 }
 
 // ─── Podcast keep-alive + Media Session ───────────────────
