@@ -800,7 +800,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.6.5</div>
+      <div class="login-footer">Morning Brief v1.6.6</div>
     </div>
   </div>
 
@@ -952,7 +952,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.6.5</div>
+      <div class="version-footer">Morning Brief v1.6.6</div>
     </div>
 
     <!-- Favoris -->
@@ -969,7 +969,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.6.5</div>
+      <div class="version-footer">Morning Brief v1.6.6</div>
     </div>
 
     <!-- Thèmes -->
@@ -986,7 +986,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.6.5</div>
+      <div class="version-footer">Morning Brief v1.6.6</div>
     </div>
 
     <!-- Profil -->
@@ -1081,7 +1081,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.6.5</div>
+      <div class="version-footer">Morning Brief v1.6.6</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1102,7 +1102,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.6.5</div>
+      <div class="version-footer">Morning Brief v1.6.6</div>
     </div>
 
     <!-- Nav -->
@@ -1128,7 +1128,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.6.5</div>
+      <div class="nav-version">Morning Brief v1.6.6</div>
     </nav>
   </div>
 </div>
@@ -2344,8 +2344,8 @@ async function testElKey() {
 
 async function _elLoadVoices(key) {
   try {
-    // Bibliotheque publique ElevenLabs filtree sur le francais
-    const res = await fetch('https://api.elevenlabs.io/v1/shared-voices?language=fr&page_size=100', {
+    // Voix du compte (premade disponibles sur tous les plans dont gratuit)
+    const res = await fetch('https://api.elevenlabs.io/v1/voices', {
       headers: { 'xi-api-key': key }
     });
     if (!res.ok) return;
@@ -2353,15 +2353,16 @@ async function _elLoadVoices(key) {
     const sel = document.getElementById('el-voice');
     if (!sel) return;
     const prev = sel.value || getElVoice();
-    const glyph = { male:'♭', female:'♀' };
+    const glyph = { male:'♂', female:'♀' };
     sel.innerHTML = voices
       .sort((a, b) => a.name.localeCompare(b.name))
       .map(v => {
         const g = glyph[v.labels?.gender] || '';
-        return `<option value="${v.voice_id}">${v.name}${g ? ' ' + g : ''}</option>`;
+        const accent = v.labels?.accent ? ` — ${v.labels.accent}` : '';
+        return `<option value="${v.voice_id}">${v.name}${g ? ' ' + g : ''}${accent}</option>`;
       }).join('');
     if (sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
-    dbg('Voix françaises chargées:', voices.length);
+    dbg('Voix chargées:', voices.length);
   } catch(e) { dbg('_elLoadVoices error', e); }
 }
 
