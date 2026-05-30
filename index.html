@@ -800,7 +800,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.6.4</div>
+      <div class="login-footer">Morning Brief v1.6.5</div>
     </div>
   </div>
 
@@ -952,7 +952,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.6.4</div>
+      <div class="version-footer">Morning Brief v1.6.5</div>
     </div>
 
     <!-- Favoris -->
@@ -969,7 +969,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.6.4</div>
+      <div class="version-footer">Morning Brief v1.6.5</div>
     </div>
 
     <!-- Thèmes -->
@@ -986,7 +986,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.6.4</div>
+      <div class="version-footer">Morning Brief v1.6.5</div>
     </div>
 
     <!-- Profil -->
@@ -1081,7 +1081,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.6.4</div>
+      <div class="version-footer">Morning Brief v1.6.5</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1102,7 +1102,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.6.4</div>
+      <div class="version-footer">Morning Brief v1.6.5</div>
     </div>
 
     <!-- Nav -->
@@ -1128,7 +1128,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.6.4</div>
+      <div class="nav-version">Morning Brief v1.6.5</div>
     </nav>
   </div>
 </div>
@@ -1170,6 +1170,17 @@
   <div id="pod-generating" class="podcast-generating" style="display:none;">
     <div class="podcast-spinner"></div>
     <span id="pod-gen-label">Rédaction du script en cours…</span>
+  </div>
+
+  <!-- Panneau d'erreur persistant -->
+  <div id="pod-error" style="display:none;width:100%;max-width:480px;text-align:center;padding:8px 0;">
+    <div style="font-size:44px;margin-bottom:14px;">⚠️</div>
+    <div id="pod-error-title" style="font-size:17px;font-weight:700;color:#fff;margin-bottom:10px;"></div>
+    <div id="pod-error-msg" style="font-size:13px;color:rgba(255,255,255,.65);line-height:1.6;margin-bottom:28px;"></div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button onclick="closePodcast()" style="padding:10px 22px;border-radius:10px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:rgba(255,255,255,.8);font-size:14px;cursor:pointer;">Fermer</button>
+      <button onclick="_podRetry()" style="padding:10px 22px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Réessayer</button>
+    </div>
   </div>
 
   <div id="pod-player" style="display:none; width:100%; max-width:480px; display:none; flex-direction:column; align-items:center;">
@@ -2262,26 +2273,48 @@ function setElKey(k)   { k ? localStorage.setItem('mb_el_key', k) : localStorage
 function getElVoice()  { return localStorage.getItem('mb_el_voice') || 'pNInz6obpgDQGcFmaJgB'; }
 function setElVoice(v) { localStorage.setItem('mb_el_voice', v); }
 
+function _podShowError(title, msg) {
+  document.getElementById('pod-generating').style.display = 'none';
+  document.getElementById('pod-library').style.display   = 'none';
+  document.getElementById('pod-player').style.display    = 'none';
+  document.getElementById('pod-error-title').textContent = title;
+  document.getElementById('pod-error-msg').textContent   = msg;
+  document.getElementById('pod-error').style.display     = 'block';
+}
+
+function _podRetry() {
+  document.getElementById('pod-error').style.display = 'none';
+  startPodcast();
+}
+
 async function _elTTS(text) {
-  if (!text?.trim()) throw new Error('Texte vide');
+  if (!text?.trim()) throw { title: 'Section vide', msg: 'Une partie du script est vide. Réessayez — cela arrive rarement.' };
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${getElVoice()}`, {
     method: 'POST',
     headers: { 'xi-api-key': getElKey(), 'Content-Type': 'application/json' },
     body: JSON.stringify({
       text,
-      model_id: 'eleven_turbo_v2_5', // disponible sur tous les plans dont gratuit
+      model_id: 'eleven_turbo_v2_5',
       voice_settings: { stability: 0.5, similarity_boost: 0.75 }
     })
   });
   if (!res.ok) {
-    let msg;
-    try {
-      const err = await res.json();
-      // ElevenLabs renvoie detail comme string ou objet selon l erreur
-      msg = typeof err.detail === 'string' ? err.detail
-          : (err.detail?.message || err.message || JSON.stringify(err));
-    } catch(e) { msg = `HTTP ${res.status}`; }
-    throw new Error(`ElevenLabs ${res.status} : ${msg}`);
+    const status = res.status;
+    const err = await res.json().catch(() => ({}));
+    const detail = typeof err.detail === 'string' ? err.detail : (err.detail?.message || err.message || '');
+    if (status === 401) throw {
+      title: 'Clé ElevenLabs invalide',
+      msg: 'Vérifiez votre clé dans Profil → Podcast — Voix puis cliquez Tester.'
+    };
+    if (status === 429) throw {
+      title: 'Quota ElevenLabs épuisé',
+      msg: 'Vous avez atteint la limite de caractères de votre plan. Revenez le mois prochain ou passez à un plan payant sur elevenlabs.io.'
+    };
+    if (status === 422) throw {
+      title: 'Voix introuvable (422)',
+      msg: 'L\'identifiant de voix est invalide. Retestez votre clé dans Profil pour recharger la liste des voix.'
+    };
+    throw { title: `Erreur ElevenLabs (${status})`, msg: detail || 'Erreur inconnue. Vérifiez votre connexion.' };
   }
   const blob = await res.blob();
   return { url: URL.createObjectURL(blob), blob };
@@ -2500,15 +2533,18 @@ async function startPodcast() {
     startPodTimer();
     podPlayFrom(0);
   } catch(e) {
-    document.getElementById('pod-generating').style.display = 'none';
-    document.getElementById('pod-library').style.display = 'block';
-    toast('Erreur : ' + e.message, 4000);
+    const title = e.title || 'Erreur inattendue';
+    const msg   = e.msg   || e.message || String(e);
+    _podShowError(title, msg);
   }
 }
 
 async function fetchPodcastScript(articles) {
   const apiKey = getApiKey();
-  if (!apiKey) throw new Error('Clé API manquante');
+  if (!apiKey) throw {
+    title: 'Clé Anthropic manquante',
+    msg: 'Ajoutez votre clé sk-ant-... dans Profil → Clé API & PIN.'
+  };
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -2520,9 +2556,33 @@ async function fetchPodcastScript(articles) {
       messages: [{ role: 'user', content: buildPodcastPrompt(articles) }]
     })
   });
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+  if (!res.ok) {
+    const status = res.status;
+    const e = await res.json().catch(() => ({}));
+    if (status === 401) throw {
+      title: 'Clé Anthropic invalide (401)',
+      msg: 'Votre clé sk-ant-... est incorrecte ou expirée. Mettez-la à jour dans Profil → Clé API & PIN.'
+    };
+    if (status === 429) throw {
+      title: 'Limite Anthropic atteinte (429)',
+      msg: 'Trop de requêtes ou quota dépassé. Attendez quelques secondes et réessayez.'
+    };
+    if (status === 529) throw {
+      title: 'Anthropic surchargé (529)',
+      msg: 'Les serveurs Anthropic sont surchargés. Réessayez dans quelques minutes.'
+    };
+    throw {
+      title: `Erreur Anthropic (${status})`,
+      msg: e.error?.message || 'Erreur réseau ou serveur. Vérifiez votre connexion et réessayez.'
+    };
+  }
   const data = await res.json();
-  return parsePodcastScript(data.content[0].text);
+  const script = parsePodcastScript(data.content[0].text);
+  if (!script.length) throw {
+    title: 'Script invalide',
+    msg: 'Claude a répondu mais le format JSON du script est incorrect. Réessayez — cela est généralement transitoire.'
+  };
+  return script;
 }
 
 function buildPodcastPrompt(articles) {
@@ -2698,6 +2758,7 @@ function closePodcast() {
   document.getElementById('pod-generating').style.display = 'none';
   document.getElementById('pod-player').style.display = 'none';
   document.getElementById('pod-library').style.display = 'none';
+  document.getElementById('pod-error').style.display = 'none';
   document.getElementById('pod-waveform').classList.remove('playing');
 }
 
