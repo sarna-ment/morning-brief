@@ -765,7 +765,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.5.2</div>
+      <div class="login-footer">Morning Brief v1.6.0</div>
     </div>
   </div>
 
@@ -917,7 +917,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.5.2</div>
+      <div class="version-footer">Morning Brief v1.6.0</div>
     </div>
 
     <!-- Favoris -->
@@ -934,7 +934,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.5.2</div>
+      <div class="version-footer">Morning Brief v1.6.0</div>
     </div>
 
     <!-- Thèmes -->
@@ -951,7 +951,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.5.2</div>
+      <div class="version-footer">Morning Brief v1.6.0</div>
     </div>
 
     <!-- Profil -->
@@ -1004,6 +1004,28 @@
         </div>
       </div>
       <div class="profil-section">
+        <h3>Podcast — Voix</h3>
+        <div class="form-group">
+          <label>Clé ElevenLabs <span style="font-weight:400;font-size:12px;">elevenlabs.io — 10 000 chars offerts/mois</span></label>
+          <div class="api-key-row">
+            <input type="password" id="el-apikey" placeholder="Optionnel — voix humaine naturelle" autocomplete="off" />
+            <button class="btn-ghost" onclick="toggleElKeyVisibility()">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Voix</label>
+          <select id="el-voice">
+            <option value="pNInz6obpgDQGcFmaJgB">Adam — Masculine, claire</option>
+            <option value="ErXwobaYiN019PkySvjV">Antoni — Masculine, chaleureuse</option>
+            <option value="VR6AewLTigWG4xSOukaG">Arnold — Masculine, profonde</option>
+            <option value="21m00Tcm4TlvDq8ikWAM">Rachel — Féminine, professionnelle</option>
+            <option value="AZnzlk1XvdvUeBnXmlld">Domi — Féminine, énergique</option>
+            <option value="EXAVITQu4vr4xnSDxMaL">Bella — Féminine, douce</option>
+          </select>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">Sans clé : voix synthétique du navigateur. Avec clé : voix humaine naturelle — et les coupures iOS disparaissent.</div>
+      </div>
+      <div class="profil-section">
         <h3>Danger</h3>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn-danger" onclick="deleteActiveProfile()">Supprimer ce profil</button>
@@ -1028,7 +1050,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.5.2</div>
+      <div class="version-footer">Morning Brief v1.6.0</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1049,7 +1071,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.5.2</div>
+      <div class="version-footer">Morning Brief v1.6.0</div>
     </div>
 
     <!-- Nav -->
@@ -1075,7 +1097,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.5.2</div>
+      <div class="nav-version">Morning Brief v1.6.0</div>
     </nav>
   </div>
 </div>
@@ -1104,9 +1126,10 @@
   <div class="podcast-title">Morning Brief Podcast</div>
   <div class="podcast-subtitle" id="pod-subtitle">5 articles · 5 minutes</div>
 
+  <audio id="pod-audio" playsinline></audio>
   <div id="pod-generating" class="podcast-generating" style="display:none;">
     <div class="podcast-spinner"></div>
-    <span>Rédaction du script en cours…</span>
+    <span id="pod-gen-label">Rédaction du script en cours…</span>
   </div>
 
   <div id="pod-player" style="display:none; width:100%; max-width:480px; display:none; flex-direction:column; align-items:center;">
@@ -1535,10 +1558,12 @@ window.addEventListener('load', async () => {
 
   // Reprise depuis l'arrière-plan (changement d'app, veille écran…)
   document.addEventListener('visibilitychange', async () => {
-    // Passage en arrière-plan : pause explicite avant qu iOS tue speechSynthesis.
-    // Un speechSynthesis.pause() + resume() est plus fiable qu un restart complet.
+    // Passage en arrière-plan
     if (document.visibilityState === 'hidden') {
-      if (_podScript.length > 0 && !_podPaused) speechSynthesis.pause();
+      // ElevenLabs : l <audio> continue de jouer en arrière-plan sur iOS — rien a faire
+      // speechSynthesis : pause explicite avant qu iOS le tue pour pouvoir resume() proprement
+      if (_podScript.length > 0 && !_podPaused && _podAudioUrls.length === 0)
+        speechSynthesis.pause();
       return;
     }
 
@@ -1571,11 +1596,15 @@ window.addEventListener('load', async () => {
 
     // Reprise du podcast après verrouillage/arrière-plan
     if (_podScript.length > 0 && !_podPaused) {
-      if (speechSynthesis.paused) {
-        speechSynthesis.resume();     // pause gracieuse réussie — reprend exactement là où on était
+      if (_podAudioUrls.length > 0) {
+        // ElevenLabs : l <audio> a joué tout seul — juste resynchroniser l UI si besoin
+        const audio = document.getElementById('pod-audio');
+        if (audio.paused && audio.src) audio.play().catch(() => {});
+      } else if (speechSynthesis.paused) {
+        speechSynthesis.resume();
       } else if (!speechSynthesis.speaking && !speechSynthesis.pending) {
         dbg('podcast: iOS a tué speechSynthesis, relance section', _podIdx);
-        podPlayFrom(_podIdx);         // iOS l a tué malgré tout — on relance la section
+        podPlayFrom(_podIdx);
       }
     }
   });
@@ -2120,13 +2149,38 @@ let _podStartTime = null;
 let _podElapsedBefore = 0; // secondes avant la dernière pause
 let _podTimer = null;
 let _podSpeed = 1;
-let _podAudioCtx = null;       // AudioContext keep-alive iOS
+let _podAudioCtx = null;       // AudioContext keep-alive iOS (fallback speechSynthesis)
 let _podKeepAliveNode = null;  // BufferSourceNode en cours
+let _podAudioUrls = [];        // blob URLs ElevenLabs par section (vide = speechSynthesis)
 const POD_DURATION = 300;      // 5 min en secondes
+
+// ─── ElevenLabs TTS ───────────────────────────────────────
+function getElKey()    { return localStorage.getItem('mb_el_key') || ''; }
+function setElKey(k)   { k ? localStorage.setItem('mb_el_key', k) : localStorage.removeItem('mb_el_key'); }
+function getElVoice()  { return localStorage.getItem('mb_el_voice') || 'pNInz6obpgDQGcFmaJgB'; }
+function setElVoice(v) { localStorage.setItem('mb_el_voice', v); }
+
+async function _elTTS(text) {
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${getElVoice()}`, {
+    method: 'POST',
+    headers: { 'xi-api-key': getElKey(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text,
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail?.message || `ElevenLabs ${res.status}`);
+  }
+  return URL.createObjectURL(await res.blob());
+}
 
 // ─── Podcast keep-alive + Media Session ───────────────────
 // AudioContext avec bruit blanc -86 dB en boucle : iOS le considere comme
 // de l audio actif et maintient la session, ce que le WAV 45 octets ne garantit pas.
+// Utilise uniquement en mode speechSynthesis (sans ElevenLabs).
 
 function _podStartKeepAlive() {
   if (_podAudioCtx) return;
@@ -2173,9 +2227,12 @@ function _podSetupMediaSession() {
   });
   navigator.mediaSession.setActionHandler('play', () => {
     if (_podPaused) { podToggle(); return; }
-    // iOS a tué speechSynthesis mais l app pense encore etre en lecture
-    if (!speechSynthesis.speaking && !speechSynthesis.pending)
-      podPlayFrom(_podIdx); // geste utilisateur => autorisé par iOS
+    if (_podAudioUrls.length > 0) {
+      const audio = document.getElementById('pod-audio');
+      if (audio.paused) audio.play().catch(() => {});
+    } else if (!speechSynthesis.speaking && !speechSynthesis.pending) {
+      podPlayFrom(_podIdx);
+    }
   });
   navigator.mediaSession.setActionHandler('pause', () => { if (!_podPaused) podToggle(); });
   navigator.mediaSession.setActionHandler('nexttrack', podSkip);
@@ -2194,22 +2251,34 @@ async function startPodcast() {
   document.getElementById('podcast-overlay').classList.remove('playing');
   document.getElementById('pod-generating').style.display = 'flex';
   document.getElementById('pod-player').style.display = 'none';
+  _podAudioUrls = [];
 
   try {
+    const genLabel = document.getElementById('pod-gen-label');
+    if (genLabel) genLabel.textContent = 'Rédaction du script en cours…';
     const script = await fetchPodcastScript(_lastArticles);
     _podScript = script;
     _podIdx = 0; _podPaused = false; _podElapsedBefore = 0;
+
+    const elKey = getElKey();
+    if (elKey) {
+      for (let i = 0; i < script.length; i++) {
+        if (genLabel) genLabel.textContent = `🎙 Génération vocale… ${i + 1}/${script.length}`;
+        _podAudioUrls.push(await _elTTS(script[i].text));
+      }
+    }
+
     _podStartTime = Date.now();
     document.getElementById('pod-generating').style.display = 'none';
     document.getElementById('pod-player').style.display = 'flex';
     document.getElementById('podcast-overlay').classList.add('playing');
-    _podStartKeepAlive();
+    if (!elKey) _podStartKeepAlive(); // keep-alive AudioContext uniquement en mode speechSynthesis
     _podSetupMediaSession();
     startPodTimer();
     podPlayFrom(0);
   } catch(e) {
     document.getElementById('pod-generating').style.display = 'none';
-    toast('Erreur script : ' + e.message, 4000);
+    toast('Erreur : ' + e.message, 4000);
     closePodcast();
   }
 }
@@ -2280,26 +2349,40 @@ function podPlayFrom(idx) {
     document.getElementById('pod-sentence').style.opacity = '1';
   }, 150);
 
-  speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(section.text);
-  utt.voice = findBestVoice();
-  utt.lang = 'fr-FR';
-  utt.rate = _podSpeed;
-  utt.onend = () => { if (!_podPaused) podPlayFrom(idx + 1); };
-  utt.onerror = () => {};
-  _utterance = utt;
-  speechSynthesis.speak(utt);
+  if (_podAudioUrls.length > 0) {
+    // Mode ElevenLabs : lecture via <audio> (survit au verrouillage iOS)
+    const audio = document.getElementById('pod-audio');
+    audio.src = _podAudioUrls[idx];
+    audio.playbackRate = _podSpeed;
+    audio.onended = () => { if (!_podPaused) podPlayFrom(idx + 1); };
+    audio.onerror = () => { podPlayFrom(idx + 1); };
+    audio.play().catch(e => dbg('pod-audio play error:', e));
+  } else {
+    // Fallback : speechSynthesis
+    speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(section.text);
+    utt.voice = findBestVoice();
+    utt.lang = 'fr-FR';
+    utt.rate = _podSpeed;
+    utt.onend = () => { if (!_podPaused) podPlayFrom(idx + 1); };
+    utt.onerror = () => {};
+    _utterance = utt;
+    speechSynthesis.speak(utt);
+  }
   document.getElementById('pod-waveform').classList.add('playing');
   document.getElementById('pod-playpause').textContent = '⏸';
   _podSetMediaState(true);
 }
 
 function podToggle() {
+  const audio = document.getElementById('pod-audio');
+  const useEL = _podAudioUrls.length > 0;
   if (_podPaused) {
     _podPaused = false;
     _podStartTime = Date.now();
-    // iOS tue parfois speechSynthesis en arrière-plan → si plus rien, on relance
-    if (!speechSynthesis.speaking && !speechSynthesis.pending) {
+    if (useEL) {
+      audio.play().catch(() => {});
+    } else if (!speechSynthesis.speaking && !speechSynthesis.pending) {
       podPlayFrom(_podIdx);
     } else {
       speechSynthesis.resume();
@@ -2311,7 +2394,7 @@ function podToggle() {
   } else {
     _podPaused = true;
     _podElapsedBefore += (Date.now() - _podStartTime) / 1000;
-    speechSynthesis.pause();
+    if (useEL) audio.pause(); else speechSynthesis.pause();
     document.getElementById('pod-waveform').classList.remove('playing');
     document.getElementById('pod-playpause').textContent = '▶';
     clearInterval(_podTimer);
@@ -2331,6 +2414,8 @@ function podRestart() {
 }
 
 function podEnd() {
+  const audio = document.getElementById('pod-audio');
+  audio.pause(); audio.src = '';
   speechSynthesis.cancel();
   _podStopKeepAlive();
   _podSetMediaState(false);
@@ -2363,8 +2448,11 @@ function cycleSpeed() {
   const labels = ['1×', '1.2×', '1.5×', '0.85×'];
   const i = speeds.indexOf(_podSpeed);
   _podSpeed = speeds[(i + 1) % speeds.length];
-  document.getElementById('pod-speed-btn').textContent = labels[(i + 1) % labels.length];
-  if (_utterance && !_podPaused) {
+  document.getElementById('pod-speed-btn').textContent = labels[(i + 1) % speeds.length];
+  const audio = document.getElementById('pod-audio');
+  if (_podAudioUrls.length > 0) {
+    audio.playbackRate = _podSpeed; // vitesse appliquée en temps réel sur <audio>
+  } else if (_utterance && !_podPaused) {
     const idx = _podIdx;
     speechSynthesis.cancel();
     podPlayFrom(idx);
@@ -2372,6 +2460,10 @@ function cycleSpeed() {
 }
 
 function closePodcast() {
+  const audio = document.getElementById('pod-audio');
+  audio.pause(); audio.src = '';
+  _podAudioUrls.forEach(u => URL.revokeObjectURL(u));
+  _podAudioUrls = [];
   speechSynthesis.cancel();
   _podStopKeepAlive();
   _podSetMediaState(false);
@@ -2466,6 +2558,10 @@ function renderProfile() {
   document.getElementById('profil-goal').value = p.goal || '';
   document.getElementById('profil-style').value = p.style || 'concis et actionnable';
   document.getElementById('profil-apikey').value = p.apikey || '';
+  const elKeyInput = document.getElementById('el-apikey');
+  if (elKeyInput) elKeyInput.value = getElKey() ? '●●●●●●●●' : '';
+  const elVoiceInput = document.getElementById('el-voice');
+  if (elVoiceInput) elVoiceInput.value = getElVoice();
   const pinStatus = document.getElementById('profil-pin-status');
   if (pinStatus) pinStatus.textContent = p.encrypted_apikey ? '🔐 PIN actif — clé synchronisée sur vos appareils.' : '⚠️ Aucun PIN — clé stockée uniquement sur cet appareil.';
   const pinInp = document.getElementById('profil-pin');
@@ -2501,6 +2597,11 @@ async function saveProfile() {
     const { error } = await sb.from('profiles').upsert({ ...updated, user_id: _sbUser.id }, { onConflict: 'id' });
     if (error) throw error;
     if (newApikey) localStorage.setItem('mb_apikey_' + updated.id, newApikey);
+    const elKeyRaw = (document.getElementById('el-apikey')?.value || '').trim();
+    if (elKeyRaw && elKeyRaw !== '●●●●●●●●') setElKey(elKeyRaw);
+    else if (!elKeyRaw) setElKey('');
+    const elVoiceVal = document.getElementById('el-voice')?.value;
+    if (elVoiceVal) setElVoice(elVoiceVal);
     _profiles[idx] = { ...updated, apikey: newApikey };
     renderProfileSwitcher(); renderProfilePills();
     const msg = newPin.length === 4 ? 'Profil enregistré · PIN mis à jour 🔐' : 'Profil enregistré ✓';
@@ -2518,6 +2619,12 @@ async function saveProfile() {
 
 function toggleApiKeyVisibility() {
   const i = document.getElementById('profil-apikey');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+
+function toggleElKeyVisibility() {
+  const i = document.getElementById('el-apikey');
+  if (i.value === '●●●●●●●●') { i.value = getElKey(); }
   i.type = i.type === 'password' ? 'text' : 'password';
 }
 
