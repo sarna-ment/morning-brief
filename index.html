@@ -800,7 +800,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.7.7</div>
+      <div class="login-footer">Morning Brief v1.7.8</div>
     </div>
   </div>
 
@@ -952,7 +952,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.7.7</div>
+      <div class="version-footer">Morning Brief v1.7.8</div>
     </div>
 
     <!-- Favoris -->
@@ -969,7 +969,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.7.7</div>
+      <div class="version-footer">Morning Brief v1.7.8</div>
     </div>
 
     <!-- Thèmes -->
@@ -986,7 +986,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.7.7</div>
+      <div class="version-footer">Morning Brief v1.7.8</div>
     </div>
 
     <!-- Profil -->
@@ -1084,7 +1084,7 @@
         </div>
       </div>
 
-      <div class="version-footer">Morning Brief v1.7.7</div>
+      <div class="version-footer">Morning Brief v1.7.8</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1105,7 +1105,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.7.7</div>
+      <div class="version-footer">Morning Brief v1.7.8</div>
     </div>
 
     <!-- Nav -->
@@ -1131,7 +1131,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.7.7</div>
+      <div class="nav-version">Morning Brief v1.7.8</div>
     </nav>
   </div>
 </div>
@@ -2903,8 +2903,24 @@ async function saveProfile() {
     // Clé ElevenLabs — même logique que Anthropic
     const elKeyRaw = (document.getElementById('el-apikey')?.value || '').trim();
     const newElKey = elKeyRaw || _profiles[idx].el_key;
-    let encryptedElKey = current.encrypted_el_key || null;
-    if (newPin.length === 4 && newElKey) encryptedElKey = await encryptWithPin(newElKey, newPin);
+
+    // Chiffrement EL : 4 cas
+    // 1. PIN saisi + clé EL présente          → chiffrer avec le PIN
+    // 2. PIN saisi + pas de clé EL            → laisser null (rien à chiffrer)
+    // 3. PIN non saisi + clé EL présente
+    //    a. PIN jamais configuré              → localStorage uniquement (normal)
+    //    b. PIN déjà configuré               → on ne peut pas chiffrer sans le PIN
+    //       → sauvegarder localement + avertir
+    // 4. Aucun changement                     → conserver encrypted_el_key existant
+    let encryptedElKey = current.encrypted_el_key || null; // conserver l existant par défaut
+    const pinAlreadySet = !!current.encrypted_apikey;
+    const elKeyNeedsSync = newElKey && !newPin && pinAlreadySet && !current.encrypted_el_key;
+
+    if (newPin.length === 4 && newElKey) {
+      encryptedElKey = await encryptWithPin(newElKey, newPin); // cas 1
+    }
+    // cas 3b : ne pas écraser encrypted_el_key existant avec null
+    // (encryptedElKey reste = current.encrypted_el_key si PIN non saisi)
 
     const updated = {
       ...current,
@@ -2924,8 +2940,12 @@ async function saveProfile() {
     if (elVoiceVal) setElVoice(elVoiceVal);
     _profiles[idx] = { ...updated, apikey: newApikey, el_key: newElKey, encrypted_el_key: encryptedElKey };
     renderProfileSwitcher(); renderProfilePills();
-    const msg = newPin.length === 4 ? 'Profil enregistré · PIN mis à jour 🔐' : 'Profil enregistré ✓';
-    toast(msg);
+    // Message selon le cas
+    let msg;
+    if (newPin.length === 4)       msg = 'Profil enregistré · PIN mis à jour 🔐';
+    else if (elKeyNeedsSync)       msg = 'Clé EL enregistrée sur cet appareil ✓ — ressaisissez votre PIN pour la chiffrer et la synchroniser sur tous vos appareils.';
+    else                           msg = 'Profil enregistré ✓';
+    toast(msg, elKeyNeedsSync ? 6000 : 3000);
   } catch(e) {
     console.error('saveProfile error', e);
     toast('Erreur : ' + (e.message || e));
