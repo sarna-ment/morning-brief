@@ -800,7 +800,7 @@
         </button>
       </div>
 
-      <div class="login-footer">Morning Brief v1.7.8</div>
+      <div class="login-footer">Morning Brief v1.8.0</div>
     </div>
   </div>
 
@@ -952,7 +952,7 @@
           </div>
         </div>
       </div>
-      <div class="version-footer">Morning Brief v1.7.8</div>
+      <div class="version-footer">Morning Brief v1.8.0</div>
     </div>
 
     <!-- Favoris -->
@@ -969,7 +969,7 @@
         <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
       </div>
       <div id="favoris-container"></div>
-      <div class="version-footer">Morning Brief v1.7.8</div>
+      <div class="version-footer">Morning Brief v1.8.0</div>
     </div>
 
     <!-- Thèmes -->
@@ -986,7 +986,7 @@
         <button class="btn-ghost" id="btn-undo-themes" onclick="undoThemes()" style="display:none;">↩ Annuler</button>
       </div>
       <div id="themes-container"></div>
-      <div class="version-footer">Morning Brief v1.7.8</div>
+      <div class="version-footer">Morning Brief v1.8.0</div>
     </div>
 
     <!-- Profil -->
@@ -1070,21 +1070,8 @@
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:8px;" id="login-user-info"></div>
       </div>
-      <div class="profil-section">
-        <h3>Développeur</h3>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0;">
-          <div>
-            <div style="font-size:14px;font-weight:600;">Mode debug</div>
-            <div style="font-size:12px;color:var(--text2);margin-top:2px;">Barre de statut sync · logs console</div>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="debug-toggle" onchange="toggleDebugMode(this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </div>
 
-      <div class="version-footer">Morning Brief v1.7.8</div>
+      <div class="version-footer">Morning Brief v1.8.0</div>
 
       <div class="save-bar">
         <button class="btn-primary" onclick="saveProfile()">
@@ -1105,7 +1092,7 @@
       </div>
       <div id="stats-container"></div>
       <div id="history-container"></div>
-      <div class="version-footer">Morning Brief v1.7.8</div>
+      <div class="version-footer">Morning Brief v1.8.0</div>
     </div>
 
     <!-- Nav -->
@@ -1131,7 +1118,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>
         Stats
       </button>
-      <div class="nav-version">Morning Brief v1.7.8</div>
+      <div class="nav-version">Morning Brief v1.8.0</div>
     </nav>
   </div>
 </div>
@@ -1383,6 +1370,12 @@ async function loadAllData() {
     const { data: settings } = await sb.from('user_settings').select('*').eq('user_id', _sbUser.id).maybeSingle();
     _activeProfileId = settings?.active_profile_id || _profiles[0]?.id || '';
     _theme = settings?.theme || 'coral';
+    // Charger la préférence de voix EL sauvegardée
+    if (settings?.el_voice && _activeProfileId)
+      localStorage.setItem('mb_el_voice_' + _activeProfileId, settings.el_voice);
+    // Marqueur utilisateur connu : évite d'afficher le setup 'new' si loadAllData échoue
+    if (_profiles.length > 0 && _sbUser)
+      localStorage.setItem('mb_known_' + _sbUser.id, '1');
 
     await reloadHistory();
     await reloadFavorites();
@@ -1703,16 +1696,6 @@ async function _initFromSession(session) {
     const el = document.getElementById('login-user-info');
     if (el) el.textContent = `Connecté : ${_sbUser.email}`;
 
-    try {
-      const { error: testErr } = await sb.from('test_log').insert({
-        user_id: _sbUser.id, message: 'auth ' + new Date().toISOString()
-      });
-      dbg('test_log:', testErr ? 'KO ' + testErr.message : 'OK ✓');
-      setDebugStatus(testErr ? 'error' : 'ok', testErr ? 'DB write KO: ' + testErr.message : 'DB write OK ✓');
-    } catch(e) {
-      dbg('test_log exception:', e.message);
-      setDebugStatus('error', 'DB write exception: ' + e.message);
-    }
 
     await loadAllData();
     _authReady = true;
@@ -1729,6 +1712,9 @@ function _resolveNavigation() {
       const prenom = p.name ? ' ' + p.name.split(' ')[0] : '';
       showPinModal(`Bonjour${prenom} ! Entrez votre PIN pour déverrouiller.`);
     } else if (_profiles.length > 0) {
+      showSetupScreen('returning');
+    } else if (_sbUser && localStorage.getItem('mb_known_' + _sbUser.id)) {
+      // Profils vides = loadAllData a échoué, pas un nouvel utilisateur
       showSetupScreen('returning');
     } else {
       showSetupScreen('new');
@@ -1765,7 +1751,12 @@ async function setupSave() {
   try {
     const pin = (document.getElementById('setup-pin')?.value || '').trim();
     const encryptedKey = pin.length === 4 ? await encryptWithPin(key, pin) : null;
-
+    // Returning user mais profils non chargés : recharger avant de continuer
+    const isReturning = document.getElementById('screen-setup')?.classList.contains('returning');
+    if (isReturning && _profiles.length === 0 && _sbUser) {
+      await loadAllData();
+      if (_profiles.length === 0) { toast('Impossible de charger votre profil. Vérifiez votre connexion.', 5000); resetBtn(); return; }
+    }
     if (_profiles.length > 0) {
       // Profil déjà en base → clé API locale + chiffrement Supabase si PIN fourni
       const p = getActiveProfile();
@@ -2287,7 +2278,13 @@ function setElKey(k, profileId) {
 
 }
 function getElVoice()  { return localStorage.getItem('mb_el_voice_' + _activeProfileId) || 'ecxPjiGTvAfpGEams6ec'; }
-function setElVoice(v) { localStorage.setItem('mb_el_voice_' + _activeProfileId, v); }
+function setElVoice(v) {
+  if (_activeProfileId) localStorage.setItem('mb_el_voice_' + _activeProfileId, v);
+  if (_sbUser) sb.from('user_settings').upsert(
+    { user_id: _sbUser.id, active_profile_id: _activeProfileId, theme: _theme, el_voice: v },
+    { onConflict: 'user_id' }
+  ).then();
+}
 
 function _podShowError(title, msg) {
   document.getElementById('pod-generating').style.display = 'none';
@@ -3122,31 +3119,11 @@ function isDebug() {
 }
 function dbg(...args) { if (isDebug()) console.log('[MB]', ...args); }
 
-function setDebugStatus(state, msg) {
-  const bar = document.getElementById('debug-bar');
-  if (!bar) return;
-  if (!isDebug()) { bar.classList.remove('visible'); return; }
-  bar.classList.add('visible');
-  const dot = document.getElementById('debug-dot');
-  dot.className = 'debug-dot' + (state === 'ok' ? ' green' : state === 'syncing' ? ' orange' : state === 'error' ? ' red' : '');
-  const msgEl = document.getElementById('debug-msg');
-  if (msgEl) msgEl.textContent = `Debug · ${msg}`;
-  const userEl = document.getElementById('debug-user');
-  if (userEl) userEl.textContent = _sbUser?.email || '';
-}
+function setDebugStatus() {}
 
-function toggleDebugMode(on) {
-  localStorage.setItem('mb_debug', on ? '1' : '0');
-  if (!on) document.getElementById('debug-bar')?.classList.remove('visible');
-  else setDebugStatus('', 'Activé');
-  toast(on ? 'Mode debug activé' : 'Mode debug désactivé');
-}
+function toggleDebugMode() {}
 
-function initDebug() {
-  const toggle = document.getElementById('debug-toggle');
-  if (toggle) toggle.checked = isDebug();
-  if (isDebug()) setDebugStatus('', `Session: ${_sbUser?.email || 'non connecté'}`);
-}
+function initDebug() {}
 
 // ─── Feedback articles ─────────────────────────────────────
 function getFeedback() { return _feedback; }
