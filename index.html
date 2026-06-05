@@ -728,6 +728,32 @@
     }
     .search-bar input:focus { border-color: var(--accent); }
 
+    /* ─── Historique avec badge podcast ─────────────────────── */
+    .history-item-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .history-item-header > div { flex: 1; min-width: 0; }
+    .pod-hist-btn {
+      background: rgba(255,107,53,.08); border: 1.5px solid var(--accent);
+      border-radius: 8px; padding: 5px 10px; font-size: 14px; line-height: 1;
+      cursor: pointer; color: var(--accent); transition: background .15s; flex-shrink: 0;
+    }
+    .pod-hist-btn:hover { background: rgba(255,107,53,.18); }
+
+    /* ─── Bouton bibliothèque dans overlay podcast ───────────── */
+    .podcast-lib-btn {
+      position: fixed; top: 16px; left: 16px;
+      background: rgba(255,255,255,.1); border: none; border-radius: 50%;
+      width: 40px; height: 40px; color: rgba(255,255,255,.7); font-size: 18px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      z-index: 10; transition: background .15s;
+    }
+    .podcast-lib-btn:hover { background: rgba(255,255,255,.2); }
+
+    /* ─── Brief actions restructurées ───────────────────────── */
+    .brief-actions-row { margin-top: -4px; }
+    .brief-actions-row .btn-secondary { flex: 1; font-size: 13px; padding: 11px 8px; }
+
     /* ─── Desktop layout ─────────────────────────────────── */
     @media (min-width: 768px) {
       body { overflow: auto; }
@@ -894,9 +920,15 @@
         </div>
       </div>
       <div class="brief-actions">
-        <button class="btn-primary" id="btn-generate" onclick="generateBrief()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>
-          Générer mon brief
+        <button class="btn-primary" id="btn-podcast" onclick="openPodcastDirect()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+          Morning Brief Podcast
+        </button>
+      </div>
+      <div class="brief-actions brief-actions-row">
+        <button class="btn-secondary" id="btn-generate" onclick="generateBrief()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Brief texte
         </button>
         <button class="btn-secondary" id="btn-weekly" onclick="generateWeekly()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -905,10 +937,6 @@
         <button class="btn-secondary" id="btn-audio" onclick="readBriefAloud()" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
           Écouter
-        </button>
-        <button class="btn-secondary" id="btn-podcast" onclick="openPodcastOverlay()" style="display:none;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
-          Podcast
         </button>
         <button class="btn-secondary" id="btn-alacarte" onclick="toggleAlaCarte()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -966,7 +994,7 @@
       </div>
       <div class="search-bar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="renderFavorites(this.value)" />
+        <input type="search" id="fav-search" placeholder="Rechercher dans les favoris…" oninput="_searchFavs(this.value)" />
       </div>
       <div id="favoris-container"></div>
       <div class="version-footer">Morning Brief v1.8.0</div>
@@ -1051,6 +1079,7 @@
         <div class="form-group">
           <label>Voix <span style="font-weight:400;font-size:12px;">(noms chargés après Tester)</span></label>
           <select id="el-voice">
+            <option value="BVBq6HVJVdnwOMJOqvy9">Voix par défaut…</option>
             <option value="ecxPjiGTvAfpGEams6ec">Voix 1…</option>
             <option value="WeAAwKYcS06VmXw086yZ">Voix 2…</option>
             <option value="WvErJnWn6OcGO9sG2kqK">Voix 3…</option>
@@ -1142,6 +1171,7 @@
 
 <!-- ══ PODCAST PLAYER ══════════════════════════════════════ -->
 <div class="podcast-overlay" id="podcast-overlay">
+  <button class="podcast-lib-btn" onclick="openPodcastLibrary()" title="Bibliothèque">📚</button>
   <button class="podcast-close" onclick="closePodcast()">✕</button>
   <div class="podcast-icon">🎙️</div>
   <div class="podcast-title">Morning Brief Podcast</div>
@@ -1173,7 +1203,7 @@
     </div>
   </div>
 
-  <div id="pod-player" style="display:none; width:100%; max-width:480px; display:none; flex-direction:column; align-items:center;">
+  <div id="pod-player" style="display:none; width:100%; max-width:480px; flex-direction:column; align-items:center;">
     <div class="podcast-article-label" id="pod-article-label"></div>
     <div class="podcast-sentence" id="pod-sentence"></div>
     <div class="podcast-waveform" id="pod-waveform">
@@ -1210,6 +1240,18 @@
   </div>
 </div>
 
+<!-- ══ DIALOG ═══════════════════════════════════════════════ -->
+<div id="dialog-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:var(--surface);border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.3);">
+    <div id="dialog-msg" style="font-size:16px;font-weight:600;line-height:1.5;margin-bottom:16px;color:var(--text);"></div>
+    <input id="dialog-input" type="text" placeholder="" style="display:none;width:100%;margin-bottom:16px;" />
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button id="dialog-cancel" class="btn-ghost">Annuler</button>
+      <button id="dialog-ok" class="btn-primary" style="width:auto;padding:10px 20px;">Confirmer</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1217,6 +1259,7 @@
 const SUPA_URL = 'https://kuoyucqpchtlrihqtzno.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1b3l1Y3FwY2h0bHJpaHF0em5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzg3MTYsImV4cCI6MjA5NDk1NDcxNn0.Iu8FkyUOctydzrfIKALgPe06OVYzC5-RLGN_v1olfbM';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+const APP_VERSION = '1.8.0';
 let _sbUser = null;
 
 // ── Machine à états d'authentification ───────────────────
@@ -1253,7 +1296,7 @@ async function sendMagicLink() {
 }
 
 async function logout() {
-  if (!confirm('Se déconnecter ?')) return;
+  if (!await _dialog('Se déconnecter ?')) return;
   await sb.auth.signOut();
   // _resetAuthState + showLoginScreen sont gérés par l'événement SIGNED_OUT
   toast('Déconnecté');
@@ -1264,7 +1307,7 @@ async function _pinKey(pin) {
   const enc = new TextEncoder();
   const km = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt: enc.encode('mb-' + _sbUser.id), iterations: 100000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: enc.encode('mb-' + _sbUser.id), iterations: 210000, hash: 'SHA-256' },
     km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
   );
 }
@@ -1516,7 +1559,7 @@ function getActiveProfile() {
 function setActiveProfileId(id) {
   _activeProfileId = id;
   if (_sbUser) sb.from('user_settings').upsert(
-    { user_id: _sbUser.id, active_profile_id: id, theme: _theme },
+    { user_id: _sbUser.id, active_profile_id: id, theme: _theme, el_voice: getElVoice() },
     { onConflict: 'user_id' }
   ).then();
 }
@@ -1524,10 +1567,7 @@ function getProfile() { return getActiveProfile(); }
 function getThemes() { const p = getActiveProfile(); return p.themes != null ? p.themes : ALL_THEMES; }
 function getApiKey() {
   const p = getActiveProfile();
-  const key = localStorage.getItem('mb_apikey_' + p.id);
-  if (key) return key;
-  const first = _profiles[0];
-  return (first && localStorage.getItem('mb_apikey_' + first.id)) || '';
+  return localStorage.getItem('mb_apikey_' + p.id) || '';
 }
 function getHistory() { return _history; }
 function getFavorites() { return _favorites; }
@@ -1540,9 +1580,10 @@ async function saveToHistory(articles) {
   const { data, error } = await sb.from('history').insert({
     profile_id: pid, user_id: _sbUser.id, label, articles
   }).select('id').single();
-  if (error) { dbg('history insert error', error); return; }
+  if (error) { dbg('history insert error', error); return null; }
   _history.unshift({ id: data.id, date: now.toISOString(), label, articles });
   _history = _history.slice(0, 30);
+  return data.id;
 }
 
 // ─── Favoris ──────────────────────────────────────────────
@@ -1576,7 +1617,7 @@ function refreshFavButtons(titre) {
 }
 
 async function clearFavorites() {
-  if (!confirm('Effacer tous les favoris ?')) return;
+  if (!await _dialog('Effacer tous les favoris ?')) return;
   await sb.from('favorites').delete().eq('profile_id', _activeProfileId);
   _favorites = [];
   renderFavorites(); toast('Favoris effacés');
@@ -1585,6 +1626,9 @@ async function clearFavorites() {
 // ─── Init ─────────────────────────────────────────────────────────
 window.addEventListener('load', async () => {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  document.querySelectorAll('.version-footer, .nav-version, .login-footer').forEach(
+    el => { el.textContent = 'Morning Brief v' + APP_VERSION; }
+  );
 
   // onAuthStateChange enregistré EN PREMIER (capture INITIAL_SESSION du hash OAuth)
   sb.auth.onAuthStateChange(async (event, session) => {
@@ -1849,20 +1893,16 @@ function toggleProfileMenu() {
 function closeProfileMenu() { const m = document.getElementById('profile-menu'); if (m) m.style.display = 'none'; }
 document.addEventListener('click', e => { const sw = document.querySelector('.profile-switcher'); if (sw && !sw.contains(e.target)) closeProfileMenu(); });
 async function switchProfile(id) {
-  _activeProfileId = id;
   closeProfileMenu();
-  if (_sbUser) sb.from('user_settings').upsert(
-    { user_id: _sbUser.id, active_profile_id: id, theme: _theme },
-    { onConflict: 'user_id' }
-  ).then();
+  setActiveProfileId(id);
   await reloadHistory(); await reloadFavorites(); await reloadFeedback();
   initApp(); toast('Profil changé');
 }
 
 async function createProfile() {
   closeProfileMenu();
-  const name = prompt('Prénom ou nom du profil :');
-  if (!name || !name.trim()) return;
+  const name = await _dialog('Prénom ou nom du profil :', { input: true, placeholder: 'Ex : Marie, Thomas…', okLabel: 'Créer' });
+  if (!name) return;
   const profile = { id: genId(), name: name.trim(), role: '', context: '', goal: '', style: 'concis et actionnable', themes: ALL_THEMES };
   const { error } = await sb.from('profiles').upsert({ ...profile, user_id: _sbUser.id }, { onConflict: 'id' });
   if (error) { toast('Erreur : ' + error.message); return; }
@@ -1880,10 +1920,12 @@ async function createProfile() {
 async function deleteActiveProfile() {
   if (_profiles.length <= 1) { toast('Impossible de supprimer le seul profil'); return; }
   const p = getActiveProfile();
-  if (!confirm(`Supprimer le profil "${p.name}" ?`)) return;
+  if (!await _dialog(`Supprimer le profil "${p.name}" ?`)) return;
   const { error } = await sb.from('profiles').delete().eq('id', p.id);
   if (error) { toast('Erreur : ' + error.message); return; }
   localStorage.removeItem('mb_apikey_' + p.id);
+  localStorage.removeItem('mb_el_key_' + p.id);
+  localStorage.removeItem('mb_el_voice_' + p.id);
   _profiles = _profiles.filter(x => x.id !== p.id);
   _activeProfileId = _profiles[0]?.id || '';
   if (_sbUser) sb.from('user_settings').upsert(
@@ -1909,11 +1951,7 @@ function renderProfilePills() {
     </div>`;
 }
 async function switchProfileInEditor(id) {
-  _activeProfileId = id;
-  if (_sbUser) sb.from('user_settings').upsert(
-    { user_id: _sbUser.id, active_profile_id: id, theme: _theme },
-    { onConflict: 'user_id' }
-  ).then();
+  setActiveProfileId(id);
   await reloadHistory(); await reloadFavorites(); await reloadFeedback();
   renderProfileSwitcher(); renderProfile(); renderThemes(); renderHistory(); toast('Profil chargé');
 }
@@ -1941,6 +1979,28 @@ function renderBriefScreen() {
 
 let _lastArticles = [];
 
+async function _callAnthropic(prompt, maxTokens = 2000) {
+  const apiKey = getApiKey();
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json', 'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+  });
+  if (!res.ok) {
+    const status = res.status;
+    const e = await res.json().catch(() => ({}));
+    if (status === 401) throw { title: 'Clé Anthropic invalide (401)', msg: 'Votre clé sk-ant-... est incorrecte ou expirée. Mettez-la à jour dans Profil → Clé API & PIN.' };
+    if (status === 429) throw { title: 'Limite Anthropic atteinte (429)', msg: 'Trop de requêtes ou quota dépassé. Attendez quelques secondes et réessayez.' };
+    if (status === 529) throw { title: 'Anthropic surchargé (529)', msg: 'Les serveurs Anthropic sont surchargés. Réessayez dans quelques minutes.' };
+    throw { title: `Erreur Anthropic (${status})`, msg: e.error?.message || 'Erreur réseau ou serveur. Vérifiez votre connexion et réessayez.' };
+  }
+  const data = await res.json();
+  return data.content[0].text;
+}
+
 async function generateBrief(weekly = false) {
   const apiKey = getApiKey();
   if (!apiKey) { toast('Clé API manquante'); return; }
@@ -1948,34 +2008,24 @@ async function generateBrief(weekly = false) {
   const container = document.getElementById('articles-container');
   btn.disabled = true;
   document.getElementById('btn-audio').style.display = 'none';
-  document.getElementById('btn-podcast').style.display = 'none';
   container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>${weekly ? 'Génération du brief hebdomadaire…' : 'L\'IA compose votre brief personnalisé…'}</p><p style="font-size:12px;opacity:.6;">Cela prend environ 10 secondes</p></div>`;
   setDebugStatus('syncing', weekly ? 'Génération hebdo…' : 'Génération brief…');
   try {
     const prompt = weekly ? buildWeeklyPrompt(getProfile()) : buildPrompt(getProfile(), getThemes());
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json', 'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
-    });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
-    const data = await res.json();
-    const articles = parseArticles(data.content[0].text);
-    if (!articles.length) throw new Error('Format de réponse inattendu');
+    const text = await _callAnthropic(prompt, 2000);
+    const articles = parseArticles(text);
+    if (!articles.length) throw { title: 'Format inattendu', msg: 'Claude n\'a pas renvoyé de JSON valide. Réessayez.' };
     _lastArticles = articles;
     renderArticles(articles, container);
-    saveToHistory(articles);
+    _lastHistoryId = await saveToHistory(articles);
     document.getElementById('brief-subtitle').textContent = `${articles.length} articles ${weekly ? 'hebdo' : 'du jour'}`;
     document.getElementById('btn-audio').style.display = 'flex';
-    document.getElementById('btn-podcast').style.display = 'flex';
     setDebugStatus('ok', `Brief généré (${articles.length} articles) ✓`);
   } catch (e) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Erreur</h3><p>${esc(e.message)}</p></div>`;
-    toast('Erreur : ' + e.message, 4000);
-    setDebugStatus('error', e.message);
+    const msg = e.msg || e.message || String(e);
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${esc(e.title || 'Erreur')}</h3><p>${esc(msg)}</p></div>`;
+    toast('Erreur : ' + msg, 4000);
+    setDebugStatus('error', msg);
   } finally { btn.disabled = false; }
 }
 
@@ -2183,7 +2233,7 @@ function findBestVoice() {
   const voices = speechSynthesis.getVoices();
   const priority = [
     v => /fr/i.test(v.lang) && /premium|enhanced|neural|thomas|amelie|marie|pierre|nicolas/i.test(v.name),
-    v => /fr/i.test(v.lang) && !v.localService === false,
+    v => /fr/i.test(v.lang) && v.localService === false,
     v => /fr/i.test(v.lang),
   ];
   for (const test of priority) {
@@ -2205,6 +2255,7 @@ let _podAudioCtx = null;       // AudioContext keep-alive iOS (fallback speechSy
 let _podKeepAliveNode = null;  // BufferSourceNode en cours
 let _podAudioUrls = [];        // blob URLs ElevenLabs par section (vide = speechSynthesis)
 let _podAudioBlobs = [];       // Blob bruts pour sauvegarde IndexedDB
+let _lastHistoryId = null;     // ID Supabase du dernier brief sauvegardé
 const POD_DURATION = 300;      // 5 min en secondes
 
 // ─── Podcast IndexedDB ────────────────────────────────────
@@ -2225,7 +2276,7 @@ async function _podDBOpen() {
   });
 }
 
-async function _podDBSave(script, blobs) {
+async function _podDBSave(script, blobs, historyId = null) {
   const db = await _podDBOpen();
   const now = new Date();
   const id  = `${_activeProfileId}_${now.toISOString()}`;
@@ -2234,6 +2285,7 @@ async function _podDBSave(script, blobs) {
     date: now.toISOString(),
     label: `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`,
     articles: (_lastArticles || []).map(a => ({ tag: a.tag, titre: a.titre })),
+    history_id: historyId || null,
     script,
     blobs: blobs.length ? blobs : null,
     hasAudio: blobs.length > 0
@@ -2277,7 +2329,7 @@ function setElKey(k, profileId) {
   _profiles = _profiles.map(p => p.id === pid ? { ...p, el_key: k || '' } : p);
 
 }
-function getElVoice()  { return localStorage.getItem('mb_el_voice_' + _activeProfileId) || 'ecxPjiGTvAfpGEams6ec'; }
+function getElVoice()  { return localStorage.getItem('mb_el_voice_' + _activeProfileId) || 'BVBq6HVJVdnwOMJOqvy9'; }
 function setElVoice(v) {
   if (_activeProfileId) localStorage.setItem('mb_el_voice_' + _activeProfileId, v);
   if (_sbUser) sb.from('user_settings').upsert(
@@ -2337,6 +2389,7 @@ async function _elTTS(text) {
 
 // 4 voix françaises sélectionnées — noms récupérés depuis /v1/voices
 const _EL_VOICE_IDS = [
+  'BVBq6HVJVdnwOMJOqvy9',  // default
   'ecxPjiGTvAfpGEams6ec',
   'WeAAwKYcS06VmXw086yZ',
   'WvErJnWn6OcGO9sG2kqK',
@@ -2456,14 +2509,43 @@ function _podSetMediaState(playing) {
     navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
 }
 
-async function openPodcastOverlay() {
+async function openPodcastLibrary() {
   stopReading();
   document.getElementById('podcast-overlay').classList.add('open');
   document.getElementById('podcast-overlay').classList.remove('playing');
   document.getElementById('pod-generating').style.display = 'none';
   document.getElementById('pod-player').style.display = 'none';
+  document.getElementById('pod-error').style.display = 'none';
   document.getElementById('pod-library').style.display = 'block';
   await renderPodLibrary();
+}
+
+async function openPodcastDirect() {
+  if (!getApiKey()) { toast('Clé API manquante'); return; }
+  if (!_lastArticles.length) {
+    // Générer le brief d'abord, silencieusement
+    const container = document.getElementById('articles-container');
+    container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>L'IA compose votre brief…</p><p style="font-size:12px;opacity:.6;">Cela prend environ 10 secondes</p></div>`;
+    setDebugStatus('syncing', 'Génération brief…');
+    try {
+      const text = await _callAnthropic(buildPrompt(getProfile(), getThemes()), 2000);
+      const articles = parseArticles(text);
+      if (!articles.length) throw { title: 'Format inattendu', msg: 'Claude n\'a pas renvoyé de JSON valide. Réessayez.' };
+      _lastArticles = articles;
+      renderArticles(articles, container);
+      _lastHistoryId = await saveToHistory(articles);
+      document.getElementById('brief-subtitle').textContent = `${articles.length} articles du jour`;
+      document.getElementById('btn-audio').style.display = 'flex';
+      setDebugStatus('ok', `Brief généré (${articles.length} articles) ✓`);
+    } catch(e) {
+      const msg = e.msg || e.message || String(e);
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${esc(e.title || 'Erreur')}</h3><p>${esc(msg)}</p></div>`;
+      toast('Erreur : ' + msg, 4000);
+      setDebugStatus('error', msg);
+      return;
+    }
+  }
+  startPodcast();
 }
 
 async function renderPodLibrary() {
@@ -2523,6 +2605,7 @@ async function startPodcast() {
   document.getElementById('podcast-overlay').classList.add('open');
   document.getElementById('podcast-overlay').classList.remove('playing');
   document.getElementById('pod-library').style.display = 'none';
+  document.getElementById('pod-error').style.display = 'none';
   document.getElementById('pod-generating').style.display = 'flex';
   document.getElementById('pod-player').style.display = 'none';
   _podAudioUrls = []; _podAudioBlobs = [];
@@ -2536,16 +2619,18 @@ async function startPodcast() {
 
     const elKey = getElKey();
     if (elKey) {
-      for (let i = 0; i < script.length; i++) {
-        if (genLabel) genLabel.textContent = `🎙 Génération vocale… ${i + 1}/${script.length}`;
-        const { url, blob } = await _elTTS(script[i].text);
-        _podAudioUrls.push(url);
-        _podAudioBlobs.push(blob);
+      if (genLabel) genLabel.textContent = `🎙 Génération vocale… (${script.length} sections en parallèle)`;
+      const settled = await Promise.allSettled(script.map(s => _elTTS(s.text)));
+      const failed = settled.find(r => r.status === 'rejected');
+      if (failed) {
+        settled.forEach(r => { if (r.status === 'fulfilled') URL.revokeObjectURL(r.value.url); });
+        throw failed.reason;
       }
+      settled.forEach(r => { _podAudioUrls.push(r.value.url); _podAudioBlobs.push(r.value.blob); });
     }
 
     // Sauvegarde silencieuse en IndexedDB (ne bloque pas la lecture)
-    _podDBSave(script, _podAudioBlobs).catch(e => dbg('podDBSave error:', e));
+    _podDBSave(script, _podAudioBlobs, _lastHistoryId).catch(e => dbg('podDBSave error:', e));
 
     _podStartTime = Date.now();
     document.getElementById('pod-generating').style.display = 'none';
@@ -2564,44 +2649,12 @@ async function startPodcast() {
 }
 
 async function fetchPodcastScript(articles) {
-  const apiKey = getApiKey();
-  if (!apiKey) throw {
+  if (!getApiKey()) throw {
     title: 'Clé Anthropic manquante',
     msg: 'Ajoutez votre clé sk-ant-... dans Profil → Clé API & PIN.'
   };
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json', 'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6', max_tokens: 1800,
-      messages: [{ role: 'user', content: buildPodcastPrompt(articles) }]
-    })
-  });
-  if (!res.ok) {
-    const status = res.status;
-    const e = await res.json().catch(() => ({}));
-    if (status === 401) throw {
-      title: 'Clé Anthropic invalide (401)',
-      msg: 'Votre clé sk-ant-... est incorrecte ou expirée. Mettez-la à jour dans Profil → Clé API & PIN.'
-    };
-    if (status === 429) throw {
-      title: 'Limite Anthropic atteinte (429)',
-      msg: 'Trop de requêtes ou quota dépassé. Attendez quelques secondes et réessayez.'
-    };
-    if (status === 529) throw {
-      title: 'Anthropic surchargé (529)',
-      msg: 'Les serveurs Anthropic sont surchargés. Réessayez dans quelques minutes.'
-    };
-    throw {
-      title: `Erreur Anthropic (${status})`,
-      msg: e.error?.message || 'Erreur réseau ou serveur. Vérifiez votre connexion et réessayez.'
-    };
-  }
-  const data = await res.json();
-  const script = parsePodcastScript(data.content[0].text);
+  const text = await _callAnthropic(buildPodcastPrompt(articles), 1800);
+  const script = parsePodcastScript(text);
   if (!script.length) throw {
     title: 'Script invalide',
     msg: 'Claude a répondu mais le format JSON du script est incorrect. Réessayez — cela est généralement transitoire.'
@@ -2819,7 +2872,7 @@ function applyThemeSelection(selected) {
   if (idx !== -1) {
     _profiles[idx].themes = selected;
     if (_sbUser) {
-      const { apikey: _a, ...pd } = _profiles[idx];
+      const { apikey: _a, el_key: _b, ...pd } = _profiles[idx];
       sb.from('profiles').upsert({ ...pd, user_id: _sbUser.id }, { onConflict: 'id' })
         .then(({ error }) => { if (error) dbg('themes save error', error); });
     }
@@ -3077,17 +3130,34 @@ function calcStreak(history) {
 }
 
 // ─── Historique ───────────────────────────────────────────
-function renderHistory() {
+async function renderHistory() {
   const history = getHistory();
   const container = document.getElementById('history-container');
   if (!history.length) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><h3>Aucun historique</h3><p>Générez votre premier brief pour le voir apparaître ici.</p></div>`;
     return;
   }
-  container.innerHTML = history.map((entry, i) => `
+  // Charger tous les podcasts pour construire un index par history_id
+  let podMap = {};
+  try {
+    const pods = await _podDBLoad();
+    pods.forEach(p => { if (p.history_id) podMap[p.history_id] = p.id; });
+  } catch(e) { dbg('renderHistory podMap error', e); }
+
+  container.innerHTML = history.map((entry, i) => {
+    const podId = entry.id ? podMap[entry.id] : null;
+    const podBtn = podId
+      ? `<button class="pod-hist-btn" title="Écouter le podcast" onclick="event.stopPropagation();playHistoryPodcast('${podId}')">🎙</button>`
+      : '';
+    return `
     <div class="history-item" onclick="toggleHistoryItem(${i})">
-      <div class="history-item-date">${entry.label}</div>
-      <div class="history-item-preview">${entry.articles.map(a => a.tag).join(' · ')}</div>
+      <div class="history-item-header">
+        <div>
+          <div class="history-item-date">${entry.label}</div>
+          <div class="history-item-preview">${entry.articles.map(a => a.tag).join(' · ')}</div>
+        </div>
+        ${podBtn}
+      </div>
       <div class="history-detail" id="hist-${i}">
         <div style="margin-top:12px;" class="articles-list">
           ${entry.articles.map((a, j) => `
@@ -3099,13 +3169,35 @@ function renderHistory() {
             </div>`).join('')}
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+async function playHistoryPodcast(podId) {
+  let pod;
+  try {
+    const db = await _podDBOpen();
+    pod = await new Promise((resolve, reject) => {
+      const tx = db.transaction('podcasts', 'readonly');
+      const req = tx.objectStore('podcasts').get(podId);
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror = e => reject(e.target.error);
+    });
+  } catch(e) { toast('Erreur lecture podcast'); return; }
+  if (!pod) { toast('Podcast introuvable'); return; }
+  stopReading();
+  document.getElementById('podcast-overlay').classList.add('open');
+  document.getElementById('podcast-overlay').classList.remove('playing');
+  document.getElementById('pod-generating').style.display = 'none';
+  document.getElementById('pod-error').style.display = 'none';
+  document.getElementById('pod-library').style.display = 'none';
+  playSavedPodcast(pod);
 }
 
 function toggleHistoryItem(i) { document.getElementById('hist-' + i).classList.toggle('open'); }
 
 async function clearHistory() {
-  if (!confirm('Effacer tout l\'historique de ce profil ?')) return;
+  if (!await _dialog('Effacer tout l\'historique de ce profil ?')) return;
   await sb.from('history').delete().eq('profile_id', _activeProfileId);
   _history = [];
   renderHistory(); renderStats(); toast('Historique effacé');
@@ -3113,9 +3205,7 @@ async function clearHistory() {
 
 // ─── Debug mode ───────────────────────────────────────────
 function isDebug() {
-  // ON par défaut ; stocker '0' pour désactiver
-  const v = localStorage.getItem('mb_debug');
-  return v === null ? true : v !== '0';
+  return localStorage.getItem('mb_debug') === '1';
 }
 function dbg(...args) { if (isDebug()) console.log('[MB]', ...args); }
 
@@ -3208,36 +3298,62 @@ async function generateAlaCarte() {
   const btn = document.getElementById('btn-generate');
   btn.disabled = true;
   document.getElementById('btn-audio').style.display = 'none';
-  document.getElementById('btn-podcast').style.display = 'none';
   const container = document.getElementById('articles-container');
   container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Brief à la carte en cours…</p><p style="font-size:12px;opacity:.6;">${_alacarteSel.slice(0,3).join(', ')}…</p></div>`;
   setDebugStatus('syncing', 'Génération à la carte…');
   try {
     const prompt = buildPrompt(getProfile(), _alacarteSel);
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
-    });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
-    const data = await res.json();
-    const articles = parseArticles(data.content[0].text);
-    if (!articles.length) throw new Error('Format inattendu');
+    const text = await _callAnthropic(prompt, 2000);
+    const articles = parseArticles(text);
+    if (!articles.length) throw { title: 'Format inattendu', msg: 'Claude n\'a pas renvoyé de JSON valide. Réessayez.' };
     _lastArticles = articles;
     renderArticles(articles, container);
-    saveToHistory(articles);
+    _lastHistoryId = await saveToHistory(articles);
     document.getElementById('brief-subtitle').textContent = `${articles.length} articles · à la carte`;
     document.getElementById('btn-audio').style.display = 'flex';
-    document.getElementById('btn-podcast').style.display = 'flex';
     setDebugStatus('ok', 'Brief à la carte généré ✓');
   } catch(e) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Erreur</h3><p>${esc(e.message)}</p></div>`;
-    toast('Erreur : ' + e.message, 4000);
-    setDebugStatus('error', e.message);
+    const msg = e.msg || e.message || String(e);
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${esc(e.title || 'Erreur')}</h3><p>${esc(msg)}</p></div>`;
+    toast('Erreur : ' + msg, 4000);
+    setDebugStatus('error', msg);
   } finally { btn.disabled = false; }
 }
 
 // ─── Utils ────────────────────────────────────────────────
+function _debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+const _searchFavs = _debounce(renderFavorites, 150);
+
+function _dialog(msg, { input = false, placeholder = '', okLabel = 'Confirmer' } = {}) {
+  return new Promise(resolve => {
+    const ov    = document.getElementById('dialog-overlay');
+    const msgEl = document.getElementById('dialog-msg');
+    const inp   = document.getElementById('dialog-input');
+    const okBtn = document.getElementById('dialog-ok');
+    const caBtn = document.getElementById('dialog-cancel');
+    msgEl.textContent = msg;
+    inp.style.display = input ? 'block' : 'none';
+    inp.placeholder   = placeholder;
+    okBtn.textContent = okLabel;
+    ov.style.display  = 'flex';
+    const done = val => {
+      ov.style.display = 'none';
+      okBtn.onclick = caBtn.onclick = inp.onkeydown = null;
+      resolve(val);
+    };
+    okBtn.onclick = () => done(input ? (inp.value.trim() || null) : true);
+    caBtn.onclick = () => done(input ? null : false);
+    if (input) {
+      inp.value = '';
+      inp.onkeydown = e => { if (e.key === 'Enter') done(inp.value.trim() || null); };
+      setTimeout(() => inp.focus(), 50);
+    }
+  });
+}
+
 function esc(str) {
   return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
