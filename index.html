@@ -1079,8 +1079,7 @@
         <div class="form-group">
           <label>Voix <span style="font-weight:400;font-size:12px;">(noms chargés après Tester)</span></label>
           <select id="el-voice">
-            <option value="BVBq6HVJVdnwOMJOqvy9">Voix par défaut…</option>
-            <option value="ecxPjiGTvAfpGEams6ec">Voix 1…</option>
+            <option value="ecxPjiGTvAfpGEams6ec">Voix par défaut…</option>
             <option value="WeAAwKYcS06VmXw086yZ">Voix 2…</option>
             <option value="WvErJnWn6OcGO9sG2kqK">Voix 3…</option>
             <option value="n1u6R6yj3qEpDLH3liBh">Voix 4…</option>
@@ -1259,7 +1258,7 @@
 const SUPA_URL = 'https://kuoyucqpchtlrihqtzno.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1b3l1Y3FwY2h0bHJpaHF0em5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzg3MTYsImV4cCI6MjA5NDk1NDcxNn0.Iu8FkyUOctydzrfIKALgPe06OVYzC5-RLGN_v1olfbM';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 let _sbUser = null;
 
 // ── Machine à états d'authentification ───────────────────
@@ -2329,7 +2328,7 @@ function setElKey(k, profileId) {
   _profiles = _profiles.map(p => p.id === pid ? { ...p, el_key: k || '' } : p);
 
 }
-function getElVoice()  { return localStorage.getItem('mb_el_voice_' + _activeProfileId) || 'BVBq6HVJVdnwOMJOqvy9'; }
+function getElVoice()  { return localStorage.getItem('mb_el_voice_' + _activeProfileId) || 'ecxPjiGTvAfpGEams6ec'; }
 function setElVoice(v) {
   if (_activeProfileId) localStorage.setItem('mb_el_voice_' + _activeProfileId, v);
   if (_sbUser) sb.from('user_settings').upsert(
@@ -2389,7 +2388,6 @@ async function _elTTS(text) {
 
 // 4 voix françaises sélectionnées — noms récupérés depuis /v1/voices
 const _EL_VOICE_IDS = [
-  'BVBq6HVJVdnwOMJOqvy9',  // default
   'ecxPjiGTvAfpGEams6ec',
   'WeAAwKYcS06VmXw086yZ',
   'WvErJnWn6OcGO9sG2kqK',
