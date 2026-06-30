@@ -1069,20 +1069,25 @@
       <div class="profil-section">
         <h3>Podcast — Voix</h3>
         <div class="form-group">
-          <label>Clé ElevenLabs <span style="font-weight:400;font-size:12px;">elevenlabs.io — 10 000 chars offerts/mois</span></label>
+          <label>Clé OpenAI (TTS) <span style="font-weight:400;font-size:12px;">platform.openai.com — facturation à l'usage</span></label>
           <div class="api-key-row">
-            <input type="password" id="el-apikey" placeholder="Optionnel — voix humaine naturelle" autocomplete="off" />
-            <button class="btn-ghost" onclick="toggleElKeyVisibility()">👁</button>
-            <button class="btn-ghost" id="el-test-btn" onclick="testElKey()">Tester</button>
+            <input type="password" id="openai-apikey" placeholder="Optionnel — voix humaine naturelle" autocomplete="off" />
+            <button class="btn-ghost" onclick="toggleOpenaiKeyVisibility()">👁</button>
+            <button class="btn-ghost" id="openai-test-btn" onclick="testOpenaiKey()">Tester</button>
           </div>
         </div>
         <div class="form-group">
-          <label>Voix <span style="font-weight:400;font-size:12px;">(noms chargés après Tester)</span></label>
-          <select id="el-voice">
-            <option value="ecxPjiGTvAfpGEams6ec">Voix par défaut…</option>
-            <option value="WeAAwKYcS06VmXw086yZ">Voix 2…</option>
-            <option value="WvErJnWn6OcGO9sG2kqK">Voix 3…</option>
-            <option value="n1u6R6yj3qEpDLH3liBh">Voix 4…</option>
+          <label>Voix</label>
+          <select id="openai-voice">
+            <option value="alloy">Alloy — neutre</option>
+            <option value="echo">Echo — masculin posé</option>
+            <option value="fable">Fable — chaleureux</option>
+            <option value="onyx">Onyx — grave, profond</option>
+            <option value="nova">Nova — féminin dynamique</option>
+            <option value="shimmer">Shimmer — féminin doux</option>
+            <option value="ash">Ash — masculin posé</option>
+            <option value="coral">Coral — féminin chaleureux</option>
+            <option value="sage">Sage — neutre posé</option>
           </select>
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:4px;">Sans clé : voix synthétique du navigateur. Avec clé : voix humaine naturelle — et les coupures iOS disparaissent.</div>
@@ -1258,7 +1263,7 @@
 const SUPA_URL = 'https://kuoyucqpchtlrihqtzno.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1b3l1Y3FwY2h0bHJpaHF0em5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzg3MTYsImV4cCI6MjA5NDk1NDcxNn0.Iu8FkyUOctydzrfIKALgPe06OVYzC5-RLGN_v1olfbM';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
-const APP_VERSION = '1.9.1';
+const APP_VERSION = '2.0.0';
 let _sbUser = null;
 
 // ── Machine à états d'authentification ───────────────────
@@ -1354,9 +1359,9 @@ async function submitPin() {
   }
   localStorage.setItem('mb_apikey_' + p.id, apikey);
   _profiles = _profiles.map(pp => pp.id === p.id ? { ...pp, apikey } : pp);
-  if (p.encrypted_el_key) {
-    const elKey = await decryptWithPin(p.encrypted_el_key, pin);
-    if (elKey) setElKey(elKey, p.id);
+  if (p.encrypted_openai_key) {
+    const openaiKey = await decryptWithPin(p.encrypted_openai_key, pin);
+    if (openaiKey) setOpenaiKey(openaiKey, p.id);
   }
   hidePinModal(); showMainApp(); initApp();
 }
@@ -1407,14 +1412,14 @@ async function loadAllData() {
     _profiles = (profiles || []).map(p => ({
       ...p,
       apikey: localStorage.getItem('mb_apikey_' + p.id) || '',
-      el_key: localStorage.getItem('mb_el_key_' + p.id) || ''
+      openai_key: localStorage.getItem('mb_openai_key_' + p.id) || ''
     }));
     const { data: settings } = await sb.from('user_settings').select('*').eq('user_id', _sbUser.id).maybeSingle();
     _activeProfileId = settings?.active_profile_id || _profiles[0]?.id || '';
     _theme = settings?.theme || 'coral';
-    // Charger la préférence de voix EL sauvegardée
-    if (settings?.el_voice && _activeProfileId)
-      localStorage.setItem('mb_el_voice_' + _activeProfileId, settings.el_voice);
+    // Charger la préférence de voix OpenAI sauvegardée
+    if (settings?.openai_voice && _activeProfileId)
+      localStorage.setItem('mb_openai_voice_' + _activeProfileId, settings.openai_voice);
     // Marqueur utilisateur connu : évite d'afficher le setup 'new' si loadAllData échoue
     if (_profiles.length > 0 && _sbUser)
       localStorage.setItem('mb_known_' + _sbUser.id, '1');
@@ -1558,7 +1563,7 @@ function getActiveProfile() {
 function setActiveProfileId(id) {
   _activeProfileId = id;
   if (_sbUser) sb.from('user_settings').upsert(
-    { user_id: _sbUser.id, active_profile_id: id, theme: _theme, el_voice: getElVoice() },
+    { user_id: _sbUser.id, active_profile_id: id, theme: _theme, openai_voice: getOpenaiVoice() },
     { onConflict: 'user_id' }
   ).then();
 }
@@ -1657,7 +1662,7 @@ window.addEventListener('load', async () => {
   document.addEventListener('visibilitychange', async () => {
     // Passage en arrière-plan
     if (document.visibilityState === 'hidden') {
-      // ElevenLabs : l <audio> continue de jouer en arrière-plan sur iOS — rien a faire
+      // OpenAI TTS : l <audio> continue de jouer en arrière-plan sur iOS — rien a faire
       // speechSynthesis : pause explicite avant qu iOS le tue pour pouvoir resume() proprement
       if (_podScript.length > 0 && !_podPaused && _podAudioUrls.length === 0)
         speechSynthesis.pause();
@@ -1694,7 +1699,7 @@ window.addEventListener('load', async () => {
     // Reprise du podcast après verrouillage/arrière-plan
     if (_podScript.length > 0 && !_podPaused) {
       if (_podAudioUrls.length > 0) {
-        // ElevenLabs : l <audio> a joué tout seul — juste resynchroniser l UI si besoin
+        // OpenAI TTS : l <audio> a joué tout seul — juste resynchroniser l UI si besoin
         const audio = document.getElementById('pod-audio');
         if (audio.paused && audio.src) audio.play().catch(() => {});
       } else if (speechSynthesis.paused) {
@@ -1923,8 +1928,8 @@ async function deleteActiveProfile() {
   const { error } = await sb.from('profiles').delete().eq('id', p.id);
   if (error) { toast('Erreur : ' + error.message); return; }
   localStorage.removeItem('mb_apikey_' + p.id);
-  localStorage.removeItem('mb_el_key_' + p.id);
-  localStorage.removeItem('mb_el_voice_' + p.id);
+  localStorage.removeItem('mb_openai_key_' + p.id);
+  localStorage.removeItem('mb_openai_voice_' + p.id);
   _profiles = _profiles.filter(x => x.id !== p.id);
   _activeProfileId = _profiles[0]?.id || '';
   if (_sbUser) sb.from('user_settings').upsert(
@@ -2252,7 +2257,7 @@ let _podTimer = null;
 let _podSpeed = 1;
 let _podAudioCtx = null;       // AudioContext keep-alive iOS (fallback speechSynthesis)
 let _podKeepAliveNode = null;  // BufferSourceNode en cours
-let _podAudioUrls = [];        // blob URLs ElevenLabs par section (vide = speechSynthesis)
+let _podAudioUrls = [];        // blob URLs OpenAI TTS par section (vide = speechSynthesis)
 let _podAudioBlobs = [];       // Blob bruts pour sauvegarde IndexedDB
 let _lastHistoryId = null;     // ID Supabase du dernier brief sauvegardé
 const POD_DURATION = 300;      // 5 min en secondes
@@ -2319,20 +2324,20 @@ async function _podDBDelete(id) {
   });
 }
 
-// ─── ElevenLabs TTS ───────────────────────────────────────
-function getElKey()  { const p = getActiveProfile(); return p?.el_key || ''; }
-function setElKey(k, profileId) {
+// ─── OpenAI TTS ───────────────────────────────────────────
+function getOpenaiKey()  { const p = getActiveProfile(); return p?.openai_key || ''; }
+function setOpenaiKey(k, profileId) {
   const pid = profileId || _activeProfileId;
-  const lk = 'mb_el_key_' + pid;
+  const lk = 'mb_openai_key_' + pid;
   k ? localStorage.setItem(lk, k) : localStorage.removeItem(lk);
-  _profiles = _profiles.map(p => p.id === pid ? { ...p, el_key: k || '' } : p);
+  _profiles = _profiles.map(p => p.id === pid ? { ...p, openai_key: k || '' } : p);
 
 }
-function getElVoice()  { return localStorage.getItem('mb_el_voice_' + _activeProfileId) || 'ecxPjiGTvAfpGEams6ec'; }
-function setElVoice(v) {
-  if (_activeProfileId) localStorage.setItem('mb_el_voice_' + _activeProfileId, v);
+function getOpenaiVoice()  { return localStorage.getItem('mb_openai_voice_' + _activeProfileId) || 'alloy'; }
+function setOpenaiVoice(v) {
+  if (_activeProfileId) localStorage.setItem('mb_openai_voice_' + _activeProfileId, v);
   if (_sbUser) sb.from('user_settings').upsert(
-    { user_id: _sbUser.id, active_profile_id: _activeProfileId, theme: _theme, el_voice: v },
+    { user_id: _sbUser.id, active_profile_id: _activeProfileId, theme: _theme, openai_voice: v },
     { onConflict: 'user_id' }
   ).then();
 }
@@ -2351,86 +2356,48 @@ function _podRetry() {
   startPodcast();
 }
 
-async function _elTTS(text) {
+async function _openaiTTS(text) {
   if (!text?.trim()) throw { title: 'Section vide', msg: 'Une partie du script est vide. Réessayez — cela arrive rarement.' };
-  const voiceId = getElVoice(); // premade Rachel par defaut, universellement disponible
-  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+  const res = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
-    headers: { 'xi-api-key': getElKey(), 'Content-Type': 'application/json' },
+    headers: { 'Authorization': `Bearer ${getOpenaiKey()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      text,
-      model_id: 'eleven_multilingual_v2',
-      voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+      model: 'gpt-4o-mini-tts',
+      voice: getOpenaiVoice(),
+      input: text,
+      response_format: 'mp3'
     })
   });
   if (!res.ok) {
     const status = res.status;
     const err = await res.json().catch(() => ({}));
-    const detail = typeof err.detail === 'string' ? err.detail : (err.detail?.message || err.message || '');
+    const detail = err.error?.message || '';
     if (status === 401) throw {
-      title: 'Clé ElevenLabs invalide',
+      title: 'Clé OpenAI invalide',
       msg: 'Vérifiez votre clé dans Profil → Podcast — Voix puis cliquez Tester.'
     };
     if (status === 429) throw {
-      title: 'Quota ElevenLabs épuisé',
-      msg: 'Vous avez atteint la limite de caractères de votre plan. Revenez le mois prochain ou passez à un plan payant sur elevenlabs.io.'
+      title: 'Quota OpenAI épuisé',
+      msg: 'Vous avez atteint la limite de votre compte OpenAI. Vérifiez votre facturation sur platform.openai.com.'
     };
-    if (status === 422) throw {
-      title: 'Voix introuvable (422)',
-      msg: 'L\'identifiant de voix est invalide. Retestez votre clé dans Profil pour recharger la liste des voix.'
-    };
-    throw { title: `Erreur ElevenLabs (${status})`, msg: detail || 'Erreur inconnue. Vérifiez votre connexion.' };
+    throw { title: `Erreur OpenAI (${status})`, msg: detail || 'Erreur inconnue. Vérifiez votre connexion.' };
   }
   const blob = await res.blob();
   return { url: URL.createObjectURL(blob), blob };
 }
 
-
-// 4 voix françaises sélectionnées — noms récupérés depuis /v1/voices
-const _EL_VOICE_IDS = [
-  'ecxPjiGTvAfpGEams6ec',
-  'WeAAwKYcS06VmXw086yZ',
-  'WvErJnWn6OcGO9sG2kqK',
-  'n1u6R6yj3qEpDLH3liBh'
-];
-
-async function _elLoadVoices(key) {
-  try {
-    const res = await fetch('https://api.elevenlabs.io/v1/voices', {
-      headers: { 'xi-api-key': key }
-    });
-    if (!res.ok) return;
-    const all = (await res.json()).voices || [];
-    const sel = document.getElementById('el-voice');
-    if (!sel) return;
-    const prev = sel.value || getElVoice();
-    const glyph = { male: '♂', female: '♀' };
-    sel.innerHTML = _EL_VOICE_IDS.map(id => {
-      const v = all.find(x => x.voice_id === id);
-      const name = v ? v.name : id.slice(0, 8) + '…';
-      const g = v ? (glyph[v.labels?.gender] || '') : '';
-      return `<option value="${id}">${name}${g ? ' ' + g : ''}</option>`;
-    }).join('');
-    if (sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
-    dbg('Voix chargées:', all.filter(v => _EL_VOICE_IDS.includes(v.voice_id)).map(v => v.name));
-  } catch(e) { dbg('_elLoadVoices error', e); }
-}
-
-async function testElKey() {
-  const inp = document.getElementById('el-apikey');
-  const key = inp?.value?.trim() || getElKey();
-  if (!key) { toast('Entrez d\'abord une clé ElevenLabs'); return; }
-  const btn = document.getElementById('el-test-btn');
+async function testOpenaiKey() {
+  const inp = document.getElementById('openai-apikey');
+  const key = inp?.value?.trim() || getOpenaiKey();
+  if (!key) { toast('Entrez d\'abord une clé OpenAI'); return; }
+  const btn = document.getElementById('openai-test-btn');
   if (btn) { btn.disabled = true; btn.textContent = '…'; }
   try {
-    const res = await fetch('https://api.elevenlabs.io/v1/user/subscription', {
-      headers: { 'xi-api-key': key }
+    const res = await fetch('https://api.openai.com/v1/models', {
+      headers: { 'Authorization': `Bearer ${key}` }
     });
     if (!res.ok) throw new Error(`Clé invalide (HTTP ${res.status})`);
-    const d = await res.json();
-    const left = (d.character_limit - d.character_count).toLocaleString('fr-FR');
-    toast(`✓ Clé valide · ${left} caractères restants`, 4000);
-    await _elLoadVoices(key);
+    toast('✓ Clé OpenAI valide', 3000);
   } catch(e) {
     toast('✗ ' + e.message, 4000);
   } finally {
@@ -2438,12 +2405,10 @@ async function testElKey() {
   }
 }
 
-// Liste fixe des 4 voix autorisées
-
 // ─── Podcast keep-alive + Media Session ───────────────────
 // AudioContext avec bruit blanc -86 dB en boucle : iOS le considere comme
 // de l audio actif et maintient la session, ce que le WAV 45 octets ne garantit pas.
-// Utilise uniquement en mode speechSynthesis (sans ElevenLabs).
+// Utilise uniquement en mode speechSynthesis (sans OpenAI TTS).
 
 function _podStartKeepAlive() {
   if (_podAudioCtx) return;
@@ -2615,10 +2580,10 @@ async function startPodcast() {
     _podScript = script;
     _podIdx = 0; _podPaused = false; _podElapsedBefore = 0;
 
-    const elKey = getElKey();
-    if (elKey) {
+    const openaiKey = getOpenaiKey();
+    if (openaiKey) {
       if (genLabel) genLabel.textContent = `🎙 Génération vocale… (${script.length} sections en parallèle)`;
-      const settled = await Promise.allSettled(script.map(s => _elTTS(s.text)));
+      const settled = await Promise.allSettled(script.map(s => _openaiTTS(s.text)));
       const failed = settled.find(r => r.status === 'rejected');
       if (failed) {
         settled.forEach(r => { if (r.status === 'fulfilled') URL.revokeObjectURL(r.value.url); });
@@ -2635,7 +2600,7 @@ async function startPodcast() {
     document.getElementById('pod-library').style.display = 'none';
     document.getElementById('pod-player').style.display = 'flex';
     document.getElementById('podcast-overlay').classList.add('playing');
-    if (!elKey) _podStartKeepAlive();
+    if (!openaiKey) _podStartKeepAlive();
     _podSetupMediaSession();
     startPodTimer();
     podPlayFrom(0);
@@ -2708,7 +2673,7 @@ function podPlayFrom(idx) {
   }, 150);
 
   if (_podAudioUrls.length > 0) {
-    // Mode ElevenLabs : lecture via <audio> (survit au verrouillage iOS)
+    // Mode OpenAI TTS : lecture via <audio> (survit au verrouillage iOS)
     const audio = document.getElementById('pod-audio');
     audio.src = _podAudioUrls[idx];
     audio.playbackRate = _podSpeed;
@@ -2870,7 +2835,7 @@ function applyThemeSelection(selected) {
   if (idx !== -1) {
     _profiles[idx].themes = selected;
     if (_sbUser) {
-      const { apikey: _a, el_key: _b, ...pd } = _profiles[idx];
+      const { apikey: _a, openai_key: _b, ...pd } = _profiles[idx];
       sb.from('profiles').upsert({ ...pd, user_id: _sbUser.id }, { onConflict: 'id' })
         .then(({ error }) => { if (error) dbg('themes save error', error); });
     }
@@ -2918,14 +2883,12 @@ function renderProfile() {
   document.getElementById('profil-goal').value = p.goal || '';
   document.getElementById('profil-style').value = p.style || 'concis et actionnable';
   document.getElementById('profil-apikey').value = p.apikey || '';
-  const elKeyInput = document.getElementById('el-apikey');
-  if (elKeyInput) elKeyInput.value = p.el_key || '';
-  const elVoiceSel = document.getElementById('el-voice');
-  if (elVoiceSel) elVoiceSel.value = getElVoice();
-  if (getElKey()) _elLoadVoices(getElKey()).catch(() => {});
-  // Charge les voix réelles du compte EL (fire-and-forget, restaure la sélection)
+  const openaiKeyInput = document.getElementById('openai-apikey');
+  if (openaiKeyInput) openaiKeyInput.value = p.openai_key || '';
+  const openaiVoiceSel = document.getElementById('openai-voice');
+  if (openaiVoiceSel) openaiVoiceSel.value = getOpenaiVoice();
   const pinStatus = document.getElementById('profil-pin-status');
-  if (pinStatus) { const bothEnc = p.encrypted_apikey && p.encrypted_el_key; pinStatus.textContent = p.encrypted_apikey ? (bothEnc ? '🔐 PIN actif — clés Anthropic & ElevenLabs synchronisées.' : '🔐 PIN actif — clé Anthropic synchronisée.') : '⚠️ Aucun PIN — clés stockées uniquement sur cet appareil.'; };
+  if (pinStatus) { const bothEnc = p.encrypted_apikey && p.encrypted_openai_key; pinStatus.textContent = p.encrypted_apikey ? (bothEnc ? '🔐 PIN actif — clés Anthropic & OpenAI synchronisées.' : '🔐 PIN actif — clé Anthropic synchronisée.') : '⚠️ Aucun PIN — clés stockées uniquement sur cet appareil.'; };
   const pinInp = document.getElementById('profil-pin');
   if (pinInp) pinInp.value = '';
   renderProfilePills();
@@ -2940,7 +2903,7 @@ async function saveProfile() {
   const btn = document.querySelector('.save-bar .btn-primary');
   if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
   try {
-    const { apikey: _drop, el_key: _dropElKey, ...current } = _profiles[idx];
+    const { apikey: _drop, openai_key: _dropOpenaiKey, ...current } = _profiles[idx];
     const newPin    = (document.getElementById('profil-pin')?.value || '').trim();
     const newApikey = key || _profiles[idx].apikey;
 
@@ -2948,52 +2911,52 @@ async function saveProfile() {
     let encryptedKey = current.encrypted_apikey || null;
     if (newPin.length === 4 && newApikey) encryptedKey = await encryptWithPin(newApikey, newPin);
 
-    // Clé ElevenLabs — même logique que Anthropic
-    const elKeyRaw = (document.getElementById('el-apikey')?.value || '').trim();
-    const newElKey = elKeyRaw || _profiles[idx].el_key;
+    // Clé OpenAI — même logique que Anthropic
+    const openaiKeyRaw = (document.getElementById('openai-apikey')?.value || '').trim();
+    const newOpenaiKey = openaiKeyRaw || _profiles[idx].openai_key;
 
-    // Chiffrement EL : 4 cas
-    // 1. PIN saisi + clé EL présente          → chiffrer avec le PIN
-    // 2. PIN saisi + pas de clé EL            → laisser null (rien à chiffrer)
-    // 3. PIN non saisi + clé EL présente
+    // Chiffrement OpenAI : 4 cas
+    // 1. PIN saisi + clé OpenAI présente      → chiffrer avec le PIN
+    // 2. PIN saisi + pas de clé OpenAI        → laisser null (rien à chiffrer)
+    // 3. PIN non saisi + clé OpenAI présente
     //    a. PIN jamais configuré              → localStorage uniquement (normal)
     //    b. PIN déjà configuré               → on ne peut pas chiffrer sans le PIN
     //       → sauvegarder localement + avertir
-    // 4. Aucun changement                     → conserver encrypted_el_key existant
-    let encryptedElKey = current.encrypted_el_key || null; // conserver l existant par défaut
+    // 4. Aucun changement                     → conserver encrypted_openai_key existant
+    let encryptedOpenaiKey = current.encrypted_openai_key || null; // conserver l existant par défaut
     const pinAlreadySet = !!current.encrypted_apikey;
-    const elKeyNeedsSync = newElKey && !newPin && pinAlreadySet && !current.encrypted_el_key;
+    const openaiKeyNeedsSync = newOpenaiKey && !newPin && pinAlreadySet && !current.encrypted_openai_key;
 
-    if (newPin.length === 4 && newElKey) {
-      encryptedElKey = await encryptWithPin(newElKey, newPin); // cas 1
+    if (newPin.length === 4 && newOpenaiKey) {
+      encryptedOpenaiKey = await encryptWithPin(newOpenaiKey, newPin); // cas 1
     }
-    // cas 3b : ne pas écraser encrypted_el_key existant avec null
-    // (encryptedElKey reste = current.encrypted_el_key si PIN non saisi)
+    // cas 3b : ne pas écraser encrypted_openai_key existant avec null
+    // (encryptedOpenaiKey reste = current.encrypted_openai_key si PIN non saisi)
 
     const updated = {
       ...current,
-      name:              document.getElementById('profil-name').value.trim() || current.name,
-      role:              document.getElementById('profil-role').value.trim(),
-      context:           document.getElementById('profil-context').value.trim(),
-      goal:              document.getElementById('profil-goal').value.trim(),
-      style:             document.getElementById('profil-style').value,
-      encrypted_apikey:  encryptedKey,
-      encrypted_el_key:  encryptedElKey,
+      name:                document.getElementById('profil-name').value.trim() || current.name,
+      role:                document.getElementById('profil-role').value.trim(),
+      context:             document.getElementById('profil-context').value.trim(),
+      goal:                document.getElementById('profil-goal').value.trim(),
+      style:               document.getElementById('profil-style').value,
+      encrypted_apikey:    encryptedKey,
+      encrypted_openai_key: encryptedOpenaiKey,
     };
     const { error } = await sb.from('profiles').upsert({ ...updated, user_id: _sbUser.id }, { onConflict: 'id' });
     if (error) throw error;
-    if (newApikey) localStorage.setItem('mb_apikey_' + updated.id, newApikey);
-    if (newElKey)  localStorage.setItem('mb_el_key_' + updated.id, newElKey);
-    const elVoiceVal = document.getElementById('el-voice')?.value;
-    if (elVoiceVal) setElVoice(elVoiceVal);
-    _profiles[idx] = { ...updated, apikey: newApikey, el_key: newElKey, encrypted_el_key: encryptedElKey };
+    if (newApikey)    localStorage.setItem('mb_apikey_' + updated.id, newApikey);
+    if (newOpenaiKey) localStorage.setItem('mb_openai_key_' + updated.id, newOpenaiKey);
+    const openaiVoiceVal = document.getElementById('openai-voice')?.value;
+    if (openaiVoiceVal) setOpenaiVoice(openaiVoiceVal);
+    _profiles[idx] = { ...updated, apikey: newApikey, openai_key: newOpenaiKey, encrypted_openai_key: encryptedOpenaiKey };
     renderProfileSwitcher(); renderProfilePills();
     // Message selon le cas
     let msg;
-    if (newPin.length === 4)       msg = 'Profil enregistré · PIN mis à jour 🔐';
-    else if (elKeyNeedsSync)       msg = 'Clé EL enregistrée sur cet appareil ✓ — ressaisissez votre PIN pour la chiffrer et la synchroniser sur tous vos appareils.';
-    else                           msg = 'Profil enregistré ✓';
-    toast(msg, elKeyNeedsSync ? 6000 : 3000);
+    if (newPin.length === 4)         msg = 'Profil enregistré · PIN mis à jour 🔐';
+    else if (openaiKeyNeedsSync)     msg = 'Clé OpenAI enregistrée sur cet appareil ✓ — ressaisissez votre PIN pour la chiffrer et la synchroniser sur tous vos appareils.';
+    else                              msg = 'Profil enregistré ✓';
+    toast(msg, openaiKeyNeedsSync ? 6000 : 3000);
   } catch(e) {
     console.error('saveProfile error', e);
     toast('Erreur : ' + (e.message || e));
@@ -3010,8 +2973,8 @@ function toggleApiKeyVisibility() {
   i.type = i.type === 'password' ? 'text' : 'password';
 }
 
-function toggleElKeyVisibility() {
-  const i = document.getElementById('el-apikey');
+function toggleOpenaiKeyVisibility() {
+  const i = document.getElementById('openai-apikey');
   i.type = i.type === 'password' ? 'text' : 'password';
 }
 
