@@ -1258,7 +1258,7 @@
 const SUPA_URL = 'https://kuoyucqpchtlrihqtzno.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1b3l1Y3FwY2h0bHJpaHF0em5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzg3MTYsImV4cCI6MjA5NDk1NDcxNn0.Iu8FkyUOctydzrfIKALgPe06OVYzC5-RLGN_v1olfbM';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.9.1';
 let _sbUser = null;
 
 // ── Machine à états d'authentification ───────────────────
@@ -2359,7 +2359,7 @@ async function _elTTS(text) {
     headers: { 'xi-api-key': getElKey(), 'Content-Type': 'application/json' },
     body: JSON.stringify({
       text,
-      model_id: 'eleven_turbo_v2_5',
+      model_id: 'eleven_multilingual_v2',
       voice_settings: { stability: 0.5, similarity_boost: 0.75 }
     })
   });
